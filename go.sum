@@ -1,0 +1,10 @@
+github.com/dictor/justlog v0.0.0-20200124140405-85776713b477 h1:S6fNaMbMhDA3g2nG9ePSKu+wRHNPb0oglSauEs7x2EM=
+github.com/dictor/justlog v0.0.0-20200124140405-85776713b477/go.mod h1:feCuBGnkTz5VEanZzDZBMEAKpDQoPSzXI+qo8e2PGKg=
+github.com/dictor/justlog v0.0.0-20200124141249-de8ca2b8d51d h1:sdV2m3iZxSvK/j06vHgo/nR9YyawZ3O3rph6OlIhM3Q=
+github.com/dictor/justlog v0.0.0-20200124141249-de8ca2b8d51d/go.mod h1:feCuBGnkTz5VEanZzDZBMEAKpDQoPSzXI+qo8e2PGKg=
+github.com/dictor/justlog v1.0.0 h1:xfdsJha7e7C6G+bc7TT4djN+SogwlpEzCldyoh8pZdw=
+github.com/dictor/justlog v1.0.0/go.mod h1:feCuBGnkTz5VEanZzDZBMEAKpDQoPSzXI+qo8e2PGKg=
+github.com/gorilla/websocket v1.4.1 h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvKCM=
+github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 h1:iQTw/8FWTuc7uiaSepXwyf3o52HaUYcV+Tu66S3F5GA=
+github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
