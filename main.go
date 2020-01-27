@@ -20,7 +20,7 @@ func main() {
 	log_path := justlog.MustPath(justlog.SetPath())
 	defer (justlog.MustStream(justlog.SetStream(log_path))).Close()
 
-	hub := newHub()
+	hub := newWebsocketHub()
 	go hub.run(wsRecieve)
 	go sendInfo(hub)
 
@@ -48,7 +48,7 @@ func main() {
 	}
 }
 
-func wsRecieve(evt *RecieveEvent) {
+func wsRecieve(evt *WebsocketEvent) {
 	str := string(*evt.msg)
 	pstr := strings.Split(str, ",")
 	switch len(pstr) {
@@ -61,7 +61,7 @@ func wsRecieve(evt *RecieveEvent) {
 	}
 }
 
-func sendInfo(h *Hub) {
+func sendInfo(h *WebsocketHub) {
 	for {
 		for cli, _ := range h.clients {
 			select {

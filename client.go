@@ -38,7 +38,7 @@ var upgrader = websocket.Upgrader{
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	hub *Hub
+	hub *WebsocketHub
 
 	// The websocket connection.
 	conn *websocket.Conn
@@ -69,7 +69,7 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.recieve <- &RecieveEvent{c, &message}
+		c.hub.recieve <- &WebsocketEvent{EVENT_RECIEVE, c, &message}
 	}
 }
 
@@ -120,7 +120,7 @@ func (c *Client) writePump() {
 }
 
 // serveWs handles websocket requests from the peer.
-func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func serveWs(hub *WebsocketHub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
