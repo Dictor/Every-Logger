@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var clientTopic map[*Client]string
+var clientTopic map[*WebsocketClient]string
 var topicValue map[string]string
 var sendPeriod, dataPeriod, fakedata int
 
@@ -25,14 +25,14 @@ func main() {
 	go sendInfo(hub)
 
 	topicValue = make(map[string]string)
-	clientTopic = make(map[*Client]string)
+	clientTopic = make(map[*WebsocketClient]string)
 	fakedata = rand.Intn(100)
 	go makeFakeData()
 
 	staticFs := http.FileServer(http.Dir("front"))
 	http.Handle("/", staticFs)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		hub.addClient(w, r)
 	})
 
 	log.Println("[SERVER START]")
@@ -84,6 +84,6 @@ func makeFakeData() {
 	}
 }
 
-func makeWsPrefix(cli *Client) string {
+func makeWsPrefix(cli *WebsocketClient) string {
 	return fmt.Sprintf("[%s][%p]", cli.conn.RemoteAddr(), &cli)
 }

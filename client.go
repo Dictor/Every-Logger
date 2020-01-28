@@ -1,6 +1,5 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Original Code by : Copyright C) 2013 The Gorilla WebSocket Authors. All rights reserved.
+// Modified by Dictor(kimdictor@gmail.com)
 
 package main
 
@@ -8,7 +7,6 @@ import (
 	"bytes"
 	"github.com/gorilla/websocket"
 	"log"
-	"net/http"
 	"time"
 )
 
@@ -37,13 +35,9 @@ var upgrader = websocket.Upgrader{
 }
 
 // Client is a middleman between the websocket connection and the hub.
-type Client struct {
-	hub *WebsocketHub
-
-	// The websocket connection.
+type WebsocketClient struct {
+	hub  *WebsocketHub
 	conn *websocket.Conn
-
-	// Buffered channel of outbound messages.
 	send chan []byte
 }
 
@@ -52,7 +46,7 @@ type Client struct {
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (c *Client) readPump() {
+func (c *WebsocketClient) readPump() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
@@ -78,7 +72,7 @@ func (c *Client) readPump() {
 // A goroutine running writePump is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (c *Client) writePump() {
+func (c *WebsocketClient) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -117,20 +111,4 @@ func (c *Client) writePump() {
 			}
 		}
 	}
-}
-
-// serveWs handles websocket requests from the peer.
-func serveWs(hub *WebsocketHub, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
-
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.writePump()
-	go client.readPump()
 }

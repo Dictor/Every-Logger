@@ -3,6 +3,10 @@
 
 package main
 
+import (
+	"net/http"
+)
+
 type WebsocketEventKind int
 
 const (
@@ -14,25 +18,27 @@ const (
 
 type WebsocketEvent struct {
 	kind   WebsocketEventKind
-	client *Client
+	client *WebsocketClient
 	msg    *[]byte
 }
 
 type WebsocketHub struct {
-	clients    map[*Client]bool
+	clients    map[*WebsocketClient]bool
 	broadcast  chan []byte
 	recieve    chan *WebsocketEvent
-	register   chan *Client
-	unregister chan *Client
+	register   chan *WebsocketClient
+	unregister chan *WebsocketClient
+	err        chan *WebsocketEvent
 }
 
 func newWebsocketHub() *WebsocketHub {
 	return &WebsocketHub{
 		broadcast:  make(chan []byte),
 		recieve:    make(chan *WebsocketEvent),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    make(map[*Client]bool),
+		register:   make(chan *WebsocketClient),
+		unregister: make(chan *WebsocketClient),
+		clients:    make(map[*WebsocketClient]bool),
+		err:        make(chan *WebsocketEvent),
 	}
 }
 
@@ -61,12 +67,12 @@ func (h *WebsocketHub) run(event_callback func(*WebsocketEvent)) {
 	}
 }
 
-func (h *WebsocketHub) closeClient(cli *Client) {
+func (h *WebsocketHub) closeClient(cli *WebsocketClient) {
 	close(cli.send)
 	delete(h.clients, cli)
 }
 
-func (h *WebsocketHub) sendSafe(cli *Client, msg *[]byte) bool {
+func (h *WebsocketHub) sendSafe(cli *WebsocketClient, msg *[]byte) bool {
 	select {
 	case cli.send <- *msg:
 		return true
@@ -74,4 +80,19 @@ func (h *WebsocketHub) sendSafe(cli *Client, msg *[]byte) bool {
 		h.closeClient(cli)
 		return false
 	}
+}
+
+func (h *WebsocketHub) addClient(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	client := &WebsocketClient{hub: h, conn: conn, send: make(chan []byte, 256)}
+	client.hub.register <- client
+
+	// Allow collection of memory referenced by the caller by doing all work in
+	// new goroutines.
+	go client.writePump()
+	go client.readPump()
 }
