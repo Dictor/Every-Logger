@@ -21,7 +21,7 @@ func main() {
 	defer (justlog.MustStream(justlog.SetStream(log_path))).Close()
 
 	hub := newWebsocketHub()
-	go hub.run(wsRecieve)
+	go hub.run(wsEvent)
 	go sendInfo(hub)
 
 	topicValue = make(map[string]string)
@@ -48,29 +48,34 @@ func main() {
 	}
 }
 
-func wsRecieve(evt *WebsocketEvent) {
-	str := string(*evt.msg)
-	pstr := strings.Split(str, ",")
-	switch len(pstr) {
-	case 2:
-		switch pstr[0] {
-		case "TOPIC":
-			log.Printf("[TOPIC CHANGE]%s : %s → %s", makeWsPrefix(evt.client), clientTopic[evt.client], pstr[1])
-			clientTopic[evt.client] = pstr[1]
+func wsEvent(evt *WebsocketEvent) {
+	switch evt.kind {
+	case EVENT_RECIEVE:
+		str := string(*evt.msg)
+		pstr := strings.Split(str, ",")
+		switch len(pstr) {
+		case 2:
+			switch pstr[0] {
+			case "TOPIC":
+				log.Printf("[TOPIC CHANGE]%s : %s → %s", makeWsPrefix(evt.client), clientTopic[evt.client], pstr[1])
+				clientTopic[evt.client] = pstr[1]
+			}
 		}
+	case EVENT_REGISTER:
+		log.Printf("[WS_REG]%s", makeWsPrefix(evt.client))
+	case EVENT_UNREGISTER:
+		log.Printf("[WS_UNREG]%s", makeWsPrefix(evt.client))
+	case EVENT_ERROR:
+		log.Printf("[WS_ERROR]%s %s", makeWsPrefix(evt.client), evt.err)
 	}
+
 }
 
 func sendInfo(h *WebsocketHub) {
 	for {
 		for cli, _ := range h.clients {
-			select {
-			case cli.send <- []byte(fmt.Sprintf("VALUE,%s,%s", clientTopic[cli], topicValue[clientTopic[cli]])):
-			default: // when client.send closed, close and delete client
-				log.Println("[WS UNREG]", makeWsPrefix(cli))
-				close(cli.send)
-				delete(h.clients, cli)
-			}
+			msg := []byte(fmt.Sprintf("VALUE,%s,%s", clientTopic[cli], topicValue[clientTopic[cli]]))
+			h.sendSafe(cli, &msg)
 		}
 		time.Sleep(time.Duration(sendPeriod) * time.Millisecond)
 	}
@@ -78,12 +83,12 @@ func sendInfo(h *WebsocketHub) {
 
 func makeFakeData() {
 	for {
-		fakedata += (rand.Intn(20) - 10)
+		fakedata += (rand.Intn(30) - 10)
 		topicValue["test"] = strconv.Itoa(fakedata)
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 	}
 }
 
 func makeWsPrefix(cli *WebsocketClient) string {
-	return fmt.Sprintf("[%s][%p]", cli.conn.RemoteAddr(), &cli)
+	return fmt.Sprintf("[%s][%d]", cli.conn.RemoteAddr(), cli.hub.clients[cli])
 }
