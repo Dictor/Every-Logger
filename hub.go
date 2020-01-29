@@ -14,31 +14,31 @@ const (
 	EVENT_REGISTER
 	EVENT_UNREGISTER
 	EVENT_BROADCAST
+	EVENT_ERROR
 )
 
 type WebsocketEvent struct {
 	kind   WebsocketEventKind
 	client *WebsocketClient
 	msg    *[]byte
+	err    error
 }
 
 type WebsocketHub struct {
 	clients    map[*WebsocketClient]bool
 	broadcast  chan []byte
-	recieve    chan *WebsocketEvent
+	event      chan *WebsocketEvent
 	register   chan *WebsocketClient
 	unregister chan *WebsocketClient
-	err        chan *WebsocketEvent
 }
 
 func newWebsocketHub() *WebsocketHub {
 	return &WebsocketHub{
 		broadcast:  make(chan []byte),
-		recieve:    make(chan *WebsocketEvent),
+		event:      make(chan *WebsocketEvent),
 		register:   make(chan *WebsocketClient),
 		unregister: make(chan *WebsocketClient),
 		clients:    make(map[*WebsocketClient]bool),
-		err:        make(chan *WebsocketEvent),
 	}
 }
 
@@ -47,21 +47,21 @@ func (h *WebsocketHub) run(event_callback func(*WebsocketEvent)) {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
-			event_callback(&WebsocketEvent{EVENT_REGISTER, client, nil})
+			event_callback(&WebsocketEvent{EVENT_REGISTER, client, nil, nil})
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				h.closeClient(client)
-				event_callback(&WebsocketEvent{EVENT_UNREGISTER, client, nil})
+				event_callback(&WebsocketEvent{EVENT_UNREGISTER, client, nil, nil})
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
 				if h.sendSafe(client, &message) {
-					event_callback(&WebsocketEvent{EVENT_BROADCAST, client, nil})
+					event_callback(&WebsocketEvent{EVENT_BROADCAST, client, nil, nil})
 				} else {
-					event_callback(&WebsocketEvent{EVENT_UNREGISTER, client, nil})
+					event_callback(&WebsocketEvent{EVENT_UNREGISTER, client, nil, nil})
 				}
 			}
-		case evt := <-h.recieve:
+		case evt := <-h.event:
 			event_callback(evt)
 		}
 	}
@@ -85,7 +85,7 @@ func (h *WebsocketHub) sendSafe(cli *WebsocketClient, msg *[]byte) bool {
 func (h *WebsocketHub) addClient(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		h.event <- &WebsocketEvent{EVENT_ERROR, nil, nil, err}
 		return
 	}
 	client := &WebsocketClient{hub: h, conn: conn, send: make(chan []byte, 256)}

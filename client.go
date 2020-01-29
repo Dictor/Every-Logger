@@ -63,7 +63,7 @@ func (c *WebsocketClient) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.recieve <- &WebsocketEvent{EVENT_RECIEVE, c, &message}
+		c.hub.event <- &WebsocketEvent{EVENT_RECIEVE, c, &message, nil}
 	}
 }
 
