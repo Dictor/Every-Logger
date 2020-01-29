@@ -25,20 +25,22 @@ type WebsocketEvent struct {
 }
 
 type WebsocketHub struct {
-	clients    map[*WebsocketClient]bool
-	broadcast  chan []byte
-	event      chan *WebsocketEvent
-	register   chan *WebsocketClient
-	unregister chan *WebsocketClient
+	clients      map[*WebsocketClient]int
+	clientsCount int
+	broadcast    chan []byte
+	event        chan *WebsocketEvent
+	register     chan *WebsocketClient
+	unregister   chan *WebsocketClient
 }
 
 func newWebsocketHub() *WebsocketHub {
 	return &WebsocketHub{
-		broadcast:  make(chan []byte),
-		event:      make(chan *WebsocketEvent),
-		register:   make(chan *WebsocketClient),
-		unregister: make(chan *WebsocketClient),
-		clients:    make(map[*WebsocketClient]bool),
+		broadcast:    make(chan []byte),
+		event:        make(chan *WebsocketEvent),
+		register:     make(chan *WebsocketClient),
+		unregister:   make(chan *WebsocketClient),
+		clients:      make(map[*WebsocketClient]int),
+		clientsCount: 0,
 	}
 }
 
@@ -46,12 +48,13 @@ func (h *WebsocketHub) run(event_callback func(*WebsocketEvent)) {
 	for {
 		select {
 		case client := <-h.register:
-			h.clients[client] = true
+			h.clients[client] = h.clientsCount
+			h.clientsCount++
 			event_callback(&WebsocketEvent{EVENT_REGISTER, client, nil, nil})
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
-				h.closeClient(client)
 				event_callback(&WebsocketEvent{EVENT_UNREGISTER, client, nil, nil})
+				h.closeClient(client)
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {
@@ -89,7 +92,7 @@ func (h *WebsocketHub) addClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := &WebsocketClient{hub: h, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
+	h.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
