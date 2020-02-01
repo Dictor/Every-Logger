@@ -40,12 +40,11 @@ var UI = {
         document.getElementById("info-error-msg").innerHTML = msg;
         document.getElementById("info").classList.add("info-error");
     },
-    test: function() {
-        this.updateInfo("Test data", "테스트 데이터");
+    init: function(topic) {
         this.initChart();
         ws.init();
         ws.conn.onopen = function(evt) {
-            ws.send("TOPIC,test");
+            ws.send("TOPIC,"+topic);
         }
     },
     initChart: function() {
@@ -85,10 +84,20 @@ var ws = {
         this.conn.onmessage = function (evt) {
             var pstr = evt.data.split(",");
             switch (pstr.length) {
+                case 2:
+                    switch (pstr[0]) {
+                        case "ERROR":
+                            alert(pstr[1]);
+                            break;
+                    }
                 case 3:
                     switch (pstr[0]) {
                         case "VALUE":
-                            UI.updateValue(Number(pstr[2]));
+                            UI.updateValue(Number(Number(pstr[2]).toFixed(2)));
+                            break;
+                        case "TOPIC":
+                            UI.updateInfo(pstr[1], pstr[2]);
+                            break;
                     }
             }
         };

@@ -23,7 +23,7 @@
 		<link href="./style.css" rel="stylesheet" type="text/css">
 		<script src="./app.js"></script>
 	</head>
-	<body onload="javascript:UI.test()">
+	<body onload="javascript:UI.init('btcusd')">
 	    <!-- Navbar for branding -->
 	    <nav class="navbar navbar-dark">
 	    	<a class="navbar-brand" href="#">Every Logger</a>
@@ -34,12 +34,12 @@
 	    	<div id="info-content" class="container-fluid">
 	    		<div class="row">
 					<div class="col-8">
-						<p id="info-name">Name</p>
-						<p id="info-detail">Detail</p>
+						<p id="info-name">?</p>
+						<p id="info-detail"></p>
 					</div>
 					<div class="col-4 flex-align">
-						<p id="info-value">Value</p>
-						<p id="info-delta">Delta</p>
+						<p id="info-value">?</p>
+						<p id="info-delta"></p>
 					</div>
 				</div>
 			</div>
