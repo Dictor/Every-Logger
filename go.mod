@@ -1,9 +1,10 @@
-module github.com/Dictor/every-logger
+module github.com/dictor/Every-Logger
 
 go 1.13
 
 require (
-	github.com/dictor/justlog v1.0.0
-	github.com/gorilla/websocket v1.4.1
-	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/PuerkitoBio/goquery v1.5.0
+	github.com/dgraph-io/badger v1.6.0
+	github.com/dictor/justlog v1.1.0
+	github.com/dictor/wswrapper v1.0.1-0.20200201040548-7881e96db067
 )
