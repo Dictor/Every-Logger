@@ -4,91 +4,83 @@ import (
 	"flag"
 	"fmt"
 	"github.com/dictor/justlog"
+	ws "github.com/dictor/wswrapper"
 	"log"
-	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
 
-var clientTopic map[*WebsocketClient]string
-var topicValue map[string]string
-var sendPeriod, dataPeriod, fakedata int
+var sendPeriod, dataPeriod int
 
 func main() {
 	log_path := justlog.MustPath(justlog.SetPath())
 	defer (justlog.MustStream(justlog.SetStream(log_path))).Close()
 
-	hub := newWebsocketHub()
-	go hub.run(wsEvent)
+	hub := ws.NewHub()
+	go hub.Run(wsEvent)
 	go sendInfo(hub)
 
-	topicValue = make(map[string]string)
-	clientTopic = make(map[*WebsocketClient]string)
-	fakedata = rand.Intn(100)
-	go makeFakeData()
+	OpenDB(justlog.ExePath)
+	BindTopicInfo(justlog.ExePath)
+	InitFetchTopic()
 
 	staticFs := http.FileServer(http.Dir("front"))
 	http.Handle("/", staticFs)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		hub.addClient(w, r)
+		hub.AddClient(w, r)
 	})
 
 	log.Println("[SERVER START]")
-
 	var addr string
-
 	flag.StringVar(&addr, "addr", ":80", "Server address")
-	flag.IntVar(&sendPeriod, "sp", 500, "Websocket sending term")
-	flag.IntVar(&dataPeriod, "fp", 100, "Fetching data term")
+	flag.IntVar(&sendPeriod, "sp", 2500, "Websocket sending term")
+	flag.IntVar(&dataPeriod, "fp", 5000, "Fetching data term")
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
-		log.Fatal("[SERVER ERROR]", err)
+		log.Fatal("[SERVER ERROR] ", err)
 	}
 }
 
-func wsEvent(evt *WebsocketEvent) {
-	switch evt.kind {
-	case EVENT_RECIEVE:
-		str := string(*evt.msg)
+func wsEvent(evt *ws.WebsocketEvent) {
+	switch evt.Kind {
+	case ws.EVENT_RECIEVE:
+		str := string(*evt.Msg)
 		pstr := strings.Split(str, ",")
 		switch len(pstr) {
 		case 2:
 			switch pstr[0] {
 			case "TOPIC":
-				log.Printf("[TOPIC CHANGE]%s : %s → %s", makeWsPrefix(evt.client), clientTopic[evt.client], pstr[1])
-				clientTopic[evt.client] = pstr[1]
+				detail, ok := topicDetail[pstr[1]]
+				if ok {
+					detailval := detail.(map[string]interface{})
+					evt.Client.Hub().Send(evt.Client, []byte("TOPIC,"+detailval["name"].(string)+","+detailval["detail"].(string)))
+					log.Printf("[TOPIC CHANGE]%s : %s → %s", makeWsPrefix(evt.Client), clientTopic[evt.Client], pstr[1])
+					clientTopic[evt.Client] = pstr[1]
+				} else {
+					evt.Client.Hub().Send(evt.Client, []byte("ERROR,NOTOPIC"))
+					log.Printf("[TOPIC CHANGE]%s : %s → %s : No topic", makeWsPrefix(evt.Client), clientTopic[evt.Client], pstr[1])
+				}
 			}
 		}
-	case EVENT_REGISTER:
-		log.Printf("[WS_REG]%s", makeWsPrefix(evt.client))
-	case EVENT_UNREGISTER:
-		log.Printf("[WS_UNREG]%s", makeWsPrefix(evt.client))
-	case EVENT_ERROR:
-		log.Printf("[WS_ERROR]%s %s", makeWsPrefix(evt.client), evt.err)
+	case ws.EVENT_REGISTER:
+		log.Printf("[WS_REG]%s", makeWsPrefix(evt.Client))
+	case ws.EVENT_UNREGISTER:
+		log.Printf("[WS_UNREG]%s", makeWsPrefix(evt.Client))
+	case ws.EVENT_ERROR:
+		log.Printf("[WS_ERROR]%s %s", makeWsPrefix(evt.Client), evt.Err)
 	}
-
 }
 
-func sendInfo(h *WebsocketHub) {
+func sendInfo(h *ws.WebsocketHub) {
 	for {
-		for cli, _ := range h.clients {
-			msg := []byte(fmt.Sprintf("VALUE,%s,%s", clientTopic[cli], topicValue[clientTopic[cli]]))
-			h.sendSafe(cli, &msg)
+		for cli, _ := range h.Clients() {
+			h.Send(cli, []byte(fmt.Sprintf("VALUE,%s,%f", clientTopic[cli], topicValue[clientTopic[cli]])))
 		}
 		time.Sleep(time.Duration(sendPeriod) * time.Millisecond)
 	}
 }
 
-func makeFakeData() {
-	for {
-		fakedata += (rand.Intn(30) - 10)
-		topicValue["test"] = strconv.Itoa(fakedata)
-		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
-	}
-}
-
-func makeWsPrefix(cli *WebsocketClient) string {
-	return fmt.Sprintf("[%s][%d]", cli.conn.RemoteAddr(), cli.hub.clients[cli])
+func makeWsPrefix(cli *ws.WebsocketClient) string {
+	return fmt.Sprintf("[%s][%d]", cli.Connection().RemoteAddr(), cli.Hub().Clients()[cli])
 }
