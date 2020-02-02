@@ -81,28 +81,23 @@ func GetTopicData(topic_name string, term string) ([]*topicData, error) {
 func isAnotherTerm(last_time int, now_time int, term string) bool {
 	clast_time := time.Unix(int64(last_time), 0)
 	cnow_time := time.Unix(int64(now_time), 0)
-
+	var before, after int
 	switch term {
 	case "1s":
-		if clast_time.Second() < cnow_time.Second() {
-			return true
-		} else {
-			return false
-		}
+		before = clast_time.Second()
+		after = cnow_time.Second()
 	case "1m":
-		if clast_time.Minute() < cnow_time.Minute() {
-			return true
-		} else {
-			return false
-		}
+		before = clast_time.Minute()
+		after = cnow_time.Minute()
 	case "1h":
-		if clast_time.Hour() < cnow_time.Hour() {
-			return true
-		} else {
-			return false
-		}
+		before = clast_time.Hour()
+		after = cnow_time.Hour()
 	}
-	return false
+	if before < after {
+		return true
+	} else {
+		return false
+	}
 }
 
 func getDbHandler(topic_name string) *badger.DB {
