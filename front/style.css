@@ -49,6 +49,11 @@ body {
     line-height: 4rem;
 }
 
+#info-date {
+    font-size: 0.75rem;
+    color: darkgrey;
+}
+
 #info-error {
     text-align: center;
 }

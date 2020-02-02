@@ -17,17 +17,15 @@ function RequestXhrGetPromise(verb) {
 
 var UI = {
     latestValue: 0.0,
+    latestRecieveTime: 0,
+    latestTermValue: 0.0,
     colorApplyDomId: ["info-value", "info-delta"],
     name: "",
     detail: "",
-    ivalue: {},
     chart: null,
-    updateIvalue: function(time, val) {
-        this.ivalue[time] = val;
-    },
     updateValue: function(time, val) {
         document.getElementById("info-value").innerHTML = val;
-        var delta = val - this.latestValue;
+        var delta = val - this.latestTermValue;
     
         document.getElementById("info-delta").innerHTML = "";
         for (var id of this.colorApplyDomId) {
@@ -43,10 +41,15 @@ var UI = {
                 obj.classList.remove("color-decrease");
             }
         }
-    
         document.getElementById("info-value").classList.remove("color-changed");
-        document.getElementById("info-delta").innerHTML += (delta > 0 ? "+" : "-") + (Math.abs(delta / this.latestValue) * 100).toFixed(2) + "%";
+        if (this.latestTermValue != 0.0) document.getElementById("info-delta").innerHTML += (delta > 0 ? "+" : "-") + (Math.abs(delta / this.latestTermValue) * 100).toFixed(2) + "%";
         this.latestValue = val;
+        if (this.latestRecieveTime == 0) {
+            setInterval(function() {
+                document.getElementById("info-date").innerHTML = ((Date.now() - UI.latestRecieveTime) / 1000).toFixed(1) + "초 전 수신됨";
+            }, 100)
+        }
+        this.latestRecieveTime = Date.now()
         this.chart.series[0].addPoint([Number(time) * 1000, val]);
     },
     updateInfo: function(name, detail) {
@@ -62,24 +65,38 @@ var UI = {
         document.getElementById("info").classList.add("info-error");
     },
     init: async function(topic) {
-        ws.init();
-        ws.conn.onopen = function(evt) {
-            ws.send("TOPIC,"+topic);
+        if (!topic || topic == "") {
+            UI.showError("Invalid topic name");
+            return;
         }
-        var ival = await RequestXhrGetPromise("ival?topic=" + topic + "&term=1m");
-        UI.initChart(JSON.parse(ival));
+        ws.init();
+        ws.conn.onopen = async function(evt) {
+            ws.send("TOPIC,"+topic);
+            var ival = await RequestXhrGetPromise("ival?topic=" + topic + "&term=1m");
+            ival = JSON.parse(ival);
+            UI.latestTermValue = Number(ival[ival.length - 1][1]);
+            UI.initChart(ival);
+        }
     },
     initChart: function(ivalue) {
+        Highcharts.setOptions({
+            time: {
+                timezone: 'Asia/Seoul'
+            }
+        });
         this.chart = Highcharts.chart('container', {
             chart: {
                 type: 'spline',
                 backgroundColor: '#1C1D21'
             },
-            title: {text: this.name},
+            title: {
+                text: this.name,
+                style: {color: '#D9D5C1'}
+            },
             xAxis: {
                 type: 'datetime',
                 title: {
-                    text: 'Date'
+                    text: '시간'
                 }
             },
             plotOptions: {
@@ -88,14 +105,17 @@ var UI = {
                         enabled: true
                     },
                     enableMouseTracking: false
+                },
+                series: {
+                    color: '#2ECC71'
                 }
             },
             tooltip: {
                 headerFormat: '<b>' + this.name + '</b><br>',
-                pointFormat: '{point.x:%Y/%B/%e %H:%M:%S}: {point.y:.2f}'
+                pointFormat: '{point.x:%Y/%m/%d %H:%M:%S} : <b>{point.y:.2f}</b>'
             },
             series: [{
-                name: 'Data',
+                name: this.name,
                 data: ivalue
             }]
         });
@@ -128,7 +148,7 @@ var ws = {
                 case 4:
                     switch (pstr[0]) {
                         case "VALUE":
-                            UI.updateValue(Number(pstr[2]), Number(Number(pstr[3]).toFixed(3)));
+                            UI.updateValue(Number(pstr[2]), Number(Number(pstr[3]).toFixed(2)));
                             break;
                     }
             }
