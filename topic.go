@@ -6,23 +6,29 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
+	"time"
 )
 
-var topicValue map[string]float64
+type topicData struct {
+	Time  int
+	Value float64
+}
+
+var topicValue map[string]*topicData
 var clientTopic map[*ws.WebsocketClient]string
 var topicDetail map[string]interface{}
 
 func InitFetchTopic() {
-	topicValue = make(map[string]float64)
+	topicValue = make(map[string]*topicData)
 	clientTopic = make(map[*ws.WebsocketClient]string)
 
-	go makeDummyData("test")
+	go MakeDummyData("test")
 	go FetchJson("btcusd", "https://api.cryptowat.ch/markets/bitfinex/btcusd/price", func(data map[string]interface{}) (string, bool) {
 		price, ok := (data["result"].(map[string]interface{}))["price"].(float64)
 		if !ok {
 			return "", false
 		} else {
-			AddTopicData("btcusd", price)
+			AddTopicData("btcusd", newTopicData(price))
 			return strconv.FormatFloat(price, 'f', -1, 64), true
 		}
 	})
@@ -35,4 +41,8 @@ func BindTopicInfo(root_dir string) {
 		log.Panic(err)
 	}
 	json.Unmarshal(rawjson, &topicDetail)
+}
+
+func newTopicData(val float64) *topicData {
+	return &topicData{int(time.Now().Unix()), val}
 }

@@ -33,12 +33,84 @@ func CloseDB() {
 	}
 }
 
-func AddTopicData(topic_name string, value float64) error {
-	err := dbHandlers[dbTableKind("TOPIC_DATA_"+topic_name)].Update(func(txn *badger.Txn) error {
-		err := txn.Set([]byte(strconv.Itoa(int(time.Now().Unix()))), []byte(strconv.FormatFloat(value, 'f', -1, 64)))
+func AddTopicData(topic_name string, data *topicData) error {
+	err := getDbHandler(topic_name).Update(func(txn *badger.Txn) error {
+		err := txn.Set([]byte(strconv.Itoa(data.Time)), []byte(strconv.FormatFloat(data.Value, 'f', -1, 64)))
 		return err
 	})
 	return err
+}
+
+func GetTopicData(topic_name string, term string) ([]*topicData, error) {
+	//term: 1s, 1m, 1h, 1d, 1m
+	var last_time_key int
+	topic_by_term := []*topicData{}
+
+	err := getDbHandler(topic_name).View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			k := item.Key()
+			err := item.Value(func(v []byte) error {
+				pk, err := strconv.Atoi(string(k))
+				if err != nil {
+					return err
+				}
+				pv, err := strconv.ParseFloat(string(v), 64)
+				if err != nil {
+					return err
+				}
+
+				if isAnotherTerm(last_time_key, pk, term) {
+					topic_by_term = append(topic_by_term, &topicData{pk, pv})
+				}
+				last_time_key = pk
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return topic_by_term, err
+}
+
+func isAnotherTerm(last_time int, now_time int, term string) bool {
+	clast_time := time.Unix(int64(last_time), 0)
+	cnow_time := time.Unix(int64(now_time), 0)
+
+	switch term {
+	case "1s":
+		if clast_time.Second() < cnow_time.Second() {
+			return true
+		} else {
+			return false
+		}
+	case "1m":
+		if clast_time.Minute() < cnow_time.Minute() {
+			return true
+		} else {
+			return false
+		}
+	case "1h":
+		if clast_time.Hour() < cnow_time.Hour() {
+			return true
+		} else {
+			return false
+		}
+	}
+	return false
+}
+
+func getDbHandler(topic_name string) *badger.DB {
+	val, ok := dbHandlers[dbTableKind("TOPIC_DATA_"+topic_name)]
+	if !ok {
+		log.Panicf("No Db handler key matched with : %s", "TOPIC_DATA_"+topic_name)
+	}
+	return val
 }
 
 func prepareDirectory(dir ...string) {

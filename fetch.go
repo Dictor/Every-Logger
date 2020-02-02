@@ -75,7 +75,7 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 			log.Printf("[FetchJson][%s] '%s' → float64 : %s \n", html_path, hres, err)
 			continue
 		}
-		topicValue[topic_name] = fres
+		topicValue[topic_name] = newTopicData(fres)
 	}
 }
 
@@ -99,9 +99,17 @@ func streamToString(s io.ReadCloser) string {
 	return str
 }
 
-func makeDummyData(topic_name string) {
+func MakeDummyData(topic_name string) {
 	for {
-		topicValue[topic_name] += rand.Float64()*25 - 10
+		val, ok := topicValue[topic_name]
+		var ival float64
+		if ok {
+			ival = val.Value
+		} else {
+			ival = 0
+		}
+
+		topicValue[topic_name] = newTopicData(ival + rand.Float64()*25 - 10)
 		AddTopicData(topic_name, topicValue[topic_name])
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 	}

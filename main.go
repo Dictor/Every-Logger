@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/dictor/justlog"
@@ -30,6 +31,27 @@ func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		hub.AddClient(w, r)
 	})
+	http.HandleFunc("/ival", func(w http.ResponseWriter, r *http.Request) {
+		topic_name, ok := r.URL.Query()["topic"]
+		if !ok {
+			return
+		}
+		term, ok := r.URL.Query()["term"]
+		if !ok {
+			return
+		}
+
+		ivalue := []interface{}{}
+		res, err := GetTopicData(topic_name[0], term[0])
+		if err == nil {
+			for _, val := range res {
+				nowvalue := []interface{}{val.Time, val.Value}
+				ivalue = append(ivalue, nowvalue)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(ivalue)
+		}
+	})
 
 	log.Println("[SERVER START]")
 	var addr string
@@ -56,6 +78,14 @@ func wsEvent(evt *ws.WebsocketEvent) {
 					detailval := detail.(map[string]interface{})
 					evt.Client.Hub().Send(evt.Client, []byte("TOPIC,"+detailval["name"].(string)+","+detailval["detail"].(string)))
 					log.Printf("[TOPIC CHANGE]%s : %s → %s", makeWsPrefix(evt.Client), clientTopic[evt.Client], pstr[1])
+					res, err := GetTopicData(pstr[1], "1m")
+					if err == nil {
+						for _, val := range res {
+							evt.Client.Hub().Send(evt.Client, []byte(fmt.Sprintf("IVALUE,%s,%d,%f", pstr[1], val.Time, val.Value)))
+							time.Sleep(10 * time.Millisecond)
+						}
+						evt.Client.Hub().Send(evt.Client, []byte("IVALUEEND"))
+					}
 					clientTopic[evt.Client] = pstr[1]
 				} else {
 					evt.Client.Hub().Send(evt.Client, []byte("ERROR,NOTOPIC"))
@@ -75,7 +105,11 @@ func wsEvent(evt *ws.WebsocketEvent) {
 func sendInfo(h *ws.WebsocketHub) {
 	for {
 		for cli, _ := range h.Clients() {
-			h.Send(cli, []byte(fmt.Sprintf("VALUE,%s,%f", clientTopic[cli], topicValue[clientTopic[cli]])))
+			valt, okt := clientTopic[cli]
+			val, ok := topicValue[valt]
+			if ok && okt {
+				h.Send(cli, []byte(fmt.Sprintf("VALUE,%s,%d,%f", valt, val.Time, val.Value)))
+			}
 		}
 		time.Sleep(time.Duration(sendPeriod) * time.Millisecond)
 	}
