@@ -1,10 +1,31 @@
+var global_host = window.location.protocol + "//" + window.location.hostname;
+function RequestXhrGetPromise(verb) {
+    return new Promise(function(resolve, reject) {
+        var req = new XMLHttpRequest();
+        req.open("GET", global_host + "/" + verb, true);
+        req.withCredentials = true;
+        req.onload = function() {
+            if (req.status == 200) {
+                resolve(req.response);
+            } else {
+                resolve(null);
+            }
+        };
+        req.send(); 
+    })
+}
+
 var UI = {
     latestValue: 0.0,
     colorApplyDomId: ["info-value", "info-delta"],
     name: "",
     detail: "",
+    ivalue: {},
     chart: null,
-    updateValue: function(val) {
+    updateIvalue: function(time, val) {
+        this.ivalue[time] = val;
+    },
+    updateValue: function(time, val) {
         document.getElementById("info-value").innerHTML = val;
         var delta = val - this.latestValue;
     
@@ -26,7 +47,7 @@ var UI = {
         document.getElementById("info-value").classList.remove("color-changed");
         document.getElementById("info-delta").innerHTML += (delta > 0 ? "+" : "-") + (Math.abs(delta / this.latestValue) * 100).toFixed(2) + "%";
         this.latestValue = val;
-        this.chart.series[0].addPoint(val);
+        this.chart.series[0].addPoint([Number(time) * 1000, val]);
     },
     updateInfo: function(name, detail) {
         document.getElementById("info-name").innerHTML = name;
@@ -40,23 +61,26 @@ var UI = {
         document.getElementById("info-error-msg").innerHTML = msg;
         document.getElementById("info").classList.add("info-error");
     },
-    init: function(topic) {
-        this.initChart();
+    init: async function(topic) {
         ws.init();
         ws.conn.onopen = function(evt) {
             ws.send("TOPIC,"+topic);
         }
+        var ival = await RequestXhrGetPromise("ival?topic=" + topic + "&term=1m");
+        UI.initChart(JSON.parse(ival));
     },
-    initChart: function() {
+    initChart: function(ivalue) {
         this.chart = Highcharts.chart('container', {
             chart: {
-                type: 'line',
+                type: 'spline',
                 backgroundColor: '#1C1D21'
             },
             title: {text: this.name},
-            subtitle: {text: this.detail},
             xAxis: {
-                categories: this.timeHistory
+                type: 'datetime',
+                title: {
+                    text: 'Date'
+                }
             },
             plotOptions: {
                 line: {
@@ -66,9 +90,13 @@ var UI = {
                     enableMouseTracking: false
                 }
             },
+            tooltip: {
+                headerFormat: '<b>' + this.name + '</b><br>',
+                pointFormat: '{point.x:%Y/%B/%e %H:%M:%S}: {point.y:.2f}'
+            },
             series: [{
                 name: 'Data',
-                data: this.dataHistory
+                data: ivalue
             }]
         });
     }
@@ -82,21 +110,25 @@ var ws = {
             UI.showError("Websocket closed, Please refresh this page.");
         };
         this.conn.onmessage = function (evt) {
+            //console.log(evt.data)
             var pstr = evt.data.split(",");
             switch (pstr.length) {
                 case 2:
                     switch (pstr[0]) {
                         case "ERROR":
-                            alert(pstr[1]);
+                            UI.showError(pstr[1]);
                             break;
                     }
                 case 3:
                     switch (pstr[0]) {
-                        case "VALUE":
-                            UI.updateValue(Number(Number(pstr[2]).toFixed(2)));
-                            break;
                         case "TOPIC":
                             UI.updateInfo(pstr[1], pstr[2]);
+                            break;
+                    }
+                case 4:
+                    switch (pstr[0]) {
+                        case "VALUE":
+                            UI.updateValue(Number(pstr[2]), Number(Number(pstr[3]).toFixed(3)));
                             break;
                     }
             }

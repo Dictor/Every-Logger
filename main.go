@@ -45,7 +45,7 @@ func main() {
 		res, err := GetTopicData(topic_name[0], term[0])
 		if err == nil {
 			for _, val := range res {
-				nowvalue := []interface{}{val.Time, val.Value}
+				nowvalue := []interface{}{val.Time * 1000, val.Value}
 				ivalue = append(ivalue, nowvalue)
 			}
 			w.Header().Set("Content-Type", "application/json")
@@ -78,14 +78,6 @@ func wsEvent(evt *ws.WebsocketEvent) {
 					detailval := detail.(map[string]interface{})
 					evt.Client.Hub().Send(evt.Client, []byte("TOPIC,"+detailval["name"].(string)+","+detailval["detail"].(string)))
 					log.Printf("[TOPIC CHANGE]%s : %s → %s", makeWsPrefix(evt.Client), clientTopic[evt.Client], pstr[1])
-					res, err := GetTopicData(pstr[1], "1m")
-					if err == nil {
-						for _, val := range res {
-							evt.Client.Hub().Send(evt.Client, []byte(fmt.Sprintf("IVALUE,%s,%d,%f", pstr[1], val.Time, val.Value)))
-							time.Sleep(10 * time.Millisecond)
-						}
-						evt.Client.Hub().Send(evt.Client, []byte("IVALUEEND"))
-					}
 					clientTopic[evt.Client] = pstr[1]
 				} else {
 					evt.Client.Hub().Send(evt.Client, []byte("ERROR,NOTOPIC"))
