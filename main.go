@@ -36,6 +36,11 @@ func main() {
 		if !ok {
 			return
 		}
+		_, topic_vaild := topicDetail[topic_name[0]]
+		if !topic_vaild {
+			return
+		}
+
 		term, ok := r.URL.Query()["term"]
 		if !ok {
 			return
@@ -57,7 +62,7 @@ func main() {
 	var addr string
 	flag.StringVar(&addr, "addr", ":80", "Server address")
 	flag.IntVar(&sendPeriod, "sp", 2500, "Websocket sending term")
-	flag.IntVar(&dataPeriod, "fp", 5000, "Fetching data term")
+	flag.IntVar(&dataPeriod, "fp", 10000, "Fetching data term")
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal("[SERVER ERROR] ", err)
