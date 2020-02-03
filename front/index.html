@@ -47,8 +47,8 @@
 					</div>
 					<div class="col-4 flex-align">
 						<p id="info-value">{{ Value.toFixed(2) }}</p>
-						<p id="info-date">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
-						<p id="info-delta">{{ ValueDelta.toFixed(2) }}%</p>
+						<p id="info-date" v-show="RecievedDate != 0">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
+						<p id="info-delta" v-show="isFinite(ValueDelta)">{{ ValueDelta > 0 ? "+" : "" }}{{ ValueDelta.toFixed(2) }}%</p>
 					</div>
 				</div>
 			</div>
