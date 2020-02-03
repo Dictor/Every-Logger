@@ -13,19 +13,25 @@
 		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-	
+		
+		<!--momentjs-->
 		<script src="https://momentjs.com/downloads/moment-with-locales.min.js"></script>
 		<script src="https://momentjs.com/downloads/moment-timezone-with-data-10-year-range.js"></script>
+		
 		<!--Highchart-->
 		<script src="https://code.highcharts.com/highcharts.js"></script>
 		<script src="https://code.highcharts.com/modules/exporting.js"></script>
 		<script src="https://code.highcharts.com/modules/export-data.js"></script>
 		<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 		
+		<!--vuejs (for develope)-->
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		
 		<link href="./style.css" rel="stylesheet" type="text/css">
-		<script src="./app.js"></script>
+		<script src="./app-vue.js"></script>
+		<script src="./api.js"></script>
 	</head>
-	<body onload="javascript:UI.init((new URL(window.location)).searchParams.get('topic'))">
+	<body onload="javascript:View.Init((new URL(window.location)).searchParams.get('topic'))">
 	    <!-- Navbar for branding -->
 	    <nav class="navbar navbar-dark">
 	    	<a class="navbar-brand" href="#">Every Logger</a>
@@ -36,13 +42,13 @@
 	    	<div id="info-content" class="container-fluid">
 	    		<div class="row">
 					<div class="col-8">
-						<p id="info-name"></p>
-						<p id="info-detail"></p>
+						<p id="info-name">{{ TopicName }}</p>
+						<p id="info-detail">{{ TopicDetail }}</p>
 					</div>
 					<div class="col-4 flex-align">
-						<p id="info-value">...</p>
-						<p id="info-date"></p>
-						<p id="info-delta"></p>
+						<p id="info-value">{{ Value.toFixed(2) }}</p>
+						<p id="info-date">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
+						<p id="info-delta">{{ ValueDelta.toFixed(2) }}%</p>
 					</div>
 				</div>
 			</div>
