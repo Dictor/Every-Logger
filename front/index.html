@@ -38,21 +38,21 @@
 		</nav>
 		
 	    <!-- Jumbotron for Variable's information -->
-	    <div id="info" class="info">
-	    	<div id="info-content" class="container-fluid">
+	    <div id="info" class="info" v-bind:class="{ 'info-errorbg': ErrorMsg != ''}">
+	    	<div id="info-content" class="container-fluid" v-show="ErrorMsg == ''">
 	    		<div class="row">
 					<div class="col-8">
 						<p id="info-name">{{ TopicName }}</p>
 						<p id="info-detail">{{ TopicDetail }}</p>
 					</div>
 					<div class="col-4 flex-align">
-						<p id="info-value">{{ Value.toFixed(2) }}</p>
+						<p id="info-value" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }">{{ Value.toFixed(2) }}</p>
 						<p id="info-date" v-show="RecievedDate != 0">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
-						<p id="info-delta" v-show="isFinite(ValueDelta)">{{ ValueDelta > 0 ? "+" : "" }}{{ ValueDelta.toFixed(2) }}%</p>
+						<p id="info-delta" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }" v-show="isFinite(ValueDelta)">{{ ValueDelta > 0 ? "+" : "" }}{{ ValueDelta.toFixed(2) }}%</p>
 					</div>
 				</div>
 			</div>
-			<div id="info-error" class="hidden"><p class="info-error-title">Unexpected error caused!</p><p id="info-error-msg"></p></div>
+			<div id="info-error" v-show="ErrorMsg != ''"><p class="info-error-title">Unexpected error caused!</p><p id="info-error-msg">{{ ErrorMsg }}</p></div>
 	    </div>
 	    
 	    <!-- Value display and infographics (graph, table and more?) -->
