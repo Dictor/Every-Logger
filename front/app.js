@@ -9,24 +9,33 @@ var Model = {
     RecievedDate: 0,
     ErrorMsg: "",
     Chart: null,
+    NowTab: 0,
+    History: null,
+    moment: moment
 };
 
 var View = {
-    InfoContent: null,
+    Info: null,
+    Tab: null,
     Init: function(topic) {
-        this.InfoContent = new Vue({
+        this.Info = new Vue({
             el: "#info",
+            data: Model
+        });
+        this.Tab = new Vue({
+            el: "#tab",
             data: Model
         });
         if (!topic || topic == "") {
             Model.ErrorMsg = "Invalid topic name.";
+            return;
         }
         Ws.Init();
         Ws.conn.onopen = async function(evt) {
             Ws.Send("TOPIC,"+topic);
-            var history = await API.GetValueHistory(topic, "1m");
-            View.DrawChart(history);
-            Model.ValueLastTerm = Number(history[history.length - 2][1]);
+            Model.History = await API.GetValueHistory(topic, "1m");
+            View.DrawChart(Model.History);
+            Model.ValueLastTerm = Number(Model.History[Model.History.length - 1][1]);
         }
         setInterval(function() {
                 Model.RecievedDateDelta = (Date.now() - Model.RecievedDate) / 1000;

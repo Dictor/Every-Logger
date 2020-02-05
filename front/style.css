@@ -74,6 +74,6 @@ body {
     justify-content: center;
 }
 
-.hidden {
-    display: none;
+.nav, #tab {
+    margin: 1em;
 }
