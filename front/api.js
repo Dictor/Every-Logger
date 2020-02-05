@@ -14,3 +14,10 @@ function RequestXhrGetPromise(verb) {
         req.send(); 
     })
 }
+
+class API {
+    static async GetValueHistory(topic_name, data_term) {
+        var data = await RequestXhrGetPromise("ival?topic=" + topic_name + "&term=" + data_term);
+        return JSON.parse(data);
+    }
+}

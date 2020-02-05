@@ -9,10 +9,6 @@ var Model = {
     RecievedDate: 0,
     ErrorMsg: "",
     Chart: null,
-    GetValueHistory: async function(topic_name, data_term) {
-        var data = await RequestXhrGetPromise("ival?topic=" + topic_name + "&term=" + data_term);
-        return JSON.parse(data);
-    }
 };
 
 var View = {
@@ -22,24 +18,21 @@ var View = {
             el: "#info",
             data: Model
         });
-        
         if (!topic || topic == "") {
             Model.ErrorMsg = "Invalid topic name.";
         }
-        
         Ws.Init();
         Ws.conn.onopen = async function(evt) {
             Ws.Send("TOPIC,"+topic);
-            var history = await Model.GetValueHistory(topic, "1m");
-            View.InitChart(history);
+            var history = await API.GetValueHistory(topic, "1m");
+            View.DrawChart(history);
             Model.ValueLastTerm = Number(history[history.length - 2][1]);
         }
-        
         setInterval(function() {
                 Model.RecievedDateDelta = (Date.now() - Model.RecievedDate) / 1000;
         }, 100);
     },
-    InitChart: function(ivalue) {
+    DrawChart: function(ivalue) {
         Highcharts.setOptions({
             time: {
                 timezone: 'Asia/Seoul'
