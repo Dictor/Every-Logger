@@ -77,3 +77,8 @@ body {
 .nav, #tab {
     margin: 1em;
 }
+
+#table-wrapper {
+    max-height: 35rem;
+    overflow-y: auto;
+}

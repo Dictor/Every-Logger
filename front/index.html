@@ -27,6 +27,7 @@
 		<!--vuejs (for develope)-->
 		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 		
+		<link href="./sm_style.css" rel="stylesheet" type="text/css">
 		<link href="./style.css" rel="stylesheet" type="text/css">
 		<script src="./app.js"></script>
 		<script src="./api.js"></script>
@@ -41,11 +42,11 @@
 	    <div id="info" class="info" v-bind:class="{ 'info-errorbg': ErrorMsg != ''}">
 	    	<div id="info-content" class="container-fluid" v-show="ErrorMsg == ''">
 	    		<div class="row">
-					<div class="col-8">
+					<div class="col-sm-8">
 						<p id="info-name">{{ TopicName }}</p>
 						<p id="info-detail">{{ TopicDetail }}</p>
 					</div>
-					<div class="col-4 flex-align">
+					<div class="col-sm-4 flex-align">
 						<p id="info-value" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }">{{ Value.toFixed(2) }}</p>
 						<p id="info-date" v-show="RecievedDate != 0">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
 						<p id="info-delta" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }" v-show="isFinite(ValueDelta)">{{ ValueDelta > 0 ? "+" : "" }}{{ ValueDelta.toFixed(2) }}%</p>
@@ -70,21 +71,24 @@
 			    <div id="container"></div>
 			</figure>
 			
-			<table class="table table-dark" v-show="NowTab == 1">
-				<thead>
-				    <tr>
-				      <th scope="col">시간</th>
-				      <th scope="col">값</th>
-				    </tr>
-			  	</thead>
-			  	<tbody v-if="History !== null">
-			  		<template v-for="item in History.slice().reverse()">
-			  			<tr>
-			  				<th scope="row">{{ moment(item[0]).format("YY/MM/DD HH:mm:ss") }}</th>	
-			  				<td>{{ item[1] }}</td>
-			  			</tr>
-					</template>
-			  	</tbody>
+			<div id="table-wrapper" class="table-reponsive">
+				<table class="table table-dark" v-show="NowTab == 1">
+					<thead>
+					    <tr>
+					      <th scope="col">시간</th>
+					      <th scope="col">값</th>
+					    </tr>
+				  	</thead>
+				  	<tbody v-if="History[Term] !== undefined">
+				  		<template v-for="item in History[Term].slice().reverse()">
+				  			<tr>
+				  				<td scope="row">{{ moment(item[0]).format("YY/MM/DD HH:mm:ss") }}</th>	
+				  				<td>{{ item[1] }}</td>
+				  			</tr>
+						</template>
+				  	</tbody>
+				  </table>
+			</div>
 	    </div>
 	    
 	</body>

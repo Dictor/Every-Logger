@@ -7,10 +7,11 @@ var Model = {
     ValueDelta: 0.0,
     RecievedDateDelta: 0.0,
     RecievedDate: 0,
+    Term: ((this.Term = (new URL(window.location)).searchParams.get('term')) ? this.Term : "1m"),
     ErrorMsg: "",
     Chart: null,
     NowTab: 0,
-    History: null,
+    History: {},
     moment: moment
 };
 
@@ -33,9 +34,10 @@ var View = {
         Ws.Init();
         Ws.conn.onopen = async function(evt) {
             Ws.Send("TOPIC,"+topic);
-            Model.History = await API.GetValueHistory(topic, "1m");
-            View.DrawChart(Model.History);
-            Model.ValueLastTerm = Number(Model.History[Model.History.length - 1][1]);
+            Model.History[Model.Term] = await API.GetValueHistory(topic, Model.Term);
+            let m = Model.History[Model.Term];
+            View.DrawChart(m);
+            Model.ValueLastTerm = Number(m[m.length - 1][1]);
         }
         setInterval(function() {
                 Model.RecievedDateDelta = (Date.now() - Model.RecievedDate) / 1000;
