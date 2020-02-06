@@ -65,8 +65,8 @@ func GetTopicData(topic_name string, term string) ([]*topicData, error) {
 
 				if isAnotherTerm(last_time_key, pk, term) {
 					topic_by_term = append(topic_by_term, &topicData{pk, pv})
+					last_time_key = pk
 				}
-				last_time_key = pk
 				return nil
 			})
 			if err != nil {
@@ -81,19 +81,21 @@ func GetTopicData(topic_name string, term string) ([]*topicData, error) {
 func isAnotherTerm(last_time int, now_time int, term string) bool {
 	clast_time := time.Unix(int64(last_time), 0)
 	cnow_time := time.Unix(int64(now_time), 0)
-	var before, after int
-	switch term {
-	case "1s":
-		before = clast_time.Second()
-		after = cnow_time.Second()
-	case "1m":
-		before = clast_time.Minute()
-		after = cnow_time.Minute()
-	case "1h":
-		before = clast_time.Hour()
-		after = cnow_time.Hour()
+	diff := cnow_time.Sub(clast_time)
+
+	var param, difflimit int
+	param, _ = strconv.Atoi(string(term[0]))
+
+	switch string(term[1]) {
+	case "s":
+		difflimit = 1
+	case "m":
+		difflimit = 60
+	case "h":
+		difflimit = 3600
 	}
-	if before < after {
+
+	if diff.Seconds() >= float64(param*difflimit) {
 		return true
 	} else {
 		return false
