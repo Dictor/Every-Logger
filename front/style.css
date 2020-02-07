@@ -33,12 +33,14 @@ body {
     color: #F2EFDC;
     font-family: 'Gothic A1', sans-serif;
     font-weight: 100;
+    word-break: keep-all;
 }
 
 #info-detail {
     padding-left: 0.5rem;
     font-size: 1.2rem;
     color: #D9D5C1;
+    word-break: keep-all;
 }
 
 #info-value {
