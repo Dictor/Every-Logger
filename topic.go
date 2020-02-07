@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	//"github.com/PuerkitoBio/goquery"
 	ws "github.com/dictor/wswrapper"
 	"io/ioutil"
 	"log"
@@ -28,8 +29,20 @@ func InitFetchTopic() {
 		if !ok {
 			return "", false
 		} else {
-			AddValue("btcusd", newTopicData(price))
 			return strconv.FormatFloat(price, 'f', -1, 64), true
+		}
+	})
+	go FetchJson("2019ncov-w", "https://wuhanvirus.kr/stat.json", func(data map[string]interface{}) (string, bool) {
+		idata, ok := (data["chart"].(map[string]interface{}))["global"].([]interface{})
+		if !ok {
+			return "retrieve idata fail", false
+		} else {
+			pdata, ok := idata[len(idata)-1].([]interface{})[1].(float64)
+			if !ok {
+				return "retrieve pdata fail", false
+			} else {
+				return strconv.FormatFloat(pdata, 'f', -1, 64), true
+			}
 		}
 	})
 }

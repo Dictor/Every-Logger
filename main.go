@@ -22,8 +22,8 @@ func main() {
 	go hub.Run(wsEvent)
 	go sendInfo(hub)
 
-	OpenDB(justlog.ExePath)
 	BindTopicInfo(justlog.ExePath)
+	OpenDB(justlog.ExePath)
 	InitFetchTopic()
 
 	staticFs := http.FileServer(http.Dir("front"))
