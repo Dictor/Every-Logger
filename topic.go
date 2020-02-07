@@ -22,13 +22,13 @@ func InitFetchTopic() {
 	topicValue = make(map[string]*topicData)
 	clientTopic = make(map[*ws.WebsocketClient]string)
 
-	go MakeDummyData("test")
+	go FetchRandom("test")
 	go FetchJson("btcusd", "https://api.cryptowat.ch/markets/bitfinex/btcusd/price", func(data map[string]interface{}) (string, bool) {
 		price, ok := (data["result"].(map[string]interface{}))["price"].(float64)
 		if !ok {
 			return "", false
 		} else {
-			AddTopicData("btcusd", newTopicData(price))
+			AddValue("btcusd", newTopicData(price))
 			return strconv.FormatFloat(price, 'f', -1, 64), true
 		}
 	})

@@ -33,7 +33,7 @@ func CloseDB() {
 	}
 }
 
-func AddTopicData(topic_name string, data *topicData) error {
+func AddValue(topic_name string, data *topicData) error {
 	err := getDbHandler(topic_name).Update(func(txn *badger.Txn) error {
 		err := txn.Set([]byte(strconv.Itoa(data.Time)), []byte(strconv.FormatFloat(data.Value, 'f', -1, 64)))
 		return err
@@ -41,7 +41,7 @@ func AddTopicData(topic_name string, data *topicData) error {
 	return err
 }
 
-func GetTopicData(topic_name string, term string) ([]*topicData, error) {
+func GetValue(topic_name string, term string) ([]*topicData, error) {
 	//term: 1s, 1m, 1h, 1d, 1m
 	var last_time_key int
 	topic_by_term := []*topicData{}

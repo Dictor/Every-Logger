@@ -15,7 +15,7 @@ import (
 )
 
 func newGoqDoc(html_path string) (*goquery.Document, bool) {
-	s, succ := fetchHtml(html_path)
+	s, succ := getHtml(html_path)
 	if !succ {
 		return nil, false
 	}
@@ -33,8 +33,7 @@ func newGoqDoc(html_path string) (*goquery.Document, bool) {
 	return doc, true
 }
 
-/*
-func fetchHtml(topic_name string, html_path string, f func(*goquery.Document) string) {
+func FetchHtml(topic_name string, html_path string, f func(*goquery.Document) string) {
 	for {
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 		doc, succ := newGoqDoc(html_path)
@@ -48,15 +47,14 @@ func fetchHtml(topic_name string, html_path string, f func(*goquery.Document) st
 			log.Printf("[fetchHtml][%s] '%s' → float64 : %s \n", html_path, hres, err)
 			continue
 		}
-		topicValue[topic_name] = fres
+		topicValue[topic_name] = newTopicData(fres)
 	}
 }
-*/
 
 func FetchJson(topic_name string, html_path string, process_callback func(map[string]interface{}) (string, bool)) {
 	for {
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
-		hres, succ := fetchHtml(html_path)
+		hres, succ := getHtml(html_path)
 		if !succ {
 			continue
 		}
@@ -79,27 +77,7 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 	}
 }
 
-func fetchHtml(html_path string) (io.ReadCloser, bool) {
-	res, err := http.Get(html_path)
-	if err != nil {
-		log.Printf("[FetchHtml][%s] %s\n", html_path, err)
-		return nil, false
-	}
-	if res.StatusCode != 200 {
-		log.Printf("[FetchHtml][%s] %s (%d)\n", html_path, res.Status, res.StatusCode)
-		return nil, false
-	}
-	return res.Body, true
-}
-
-func streamToString(s io.ReadCloser) string {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(s)
-	str := buf.String()
-	return str
-}
-
-func MakeDummyData(topic_name string) {
+func FetchRandom(topic_name string) {
 	for {
 		val, ok := topicValue[topic_name]
 		var ival float64
@@ -110,7 +88,27 @@ func MakeDummyData(topic_name string) {
 		}
 
 		topicValue[topic_name] = newTopicData(ival + rand.Float64()*25 - 10)
-		AddTopicData(topic_name, topicValue[topic_name])
+		AddValue(topic_name, topicValue[topic_name])
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 	}
+}
+
+func streamToString(s io.ReadCloser) string {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(s)
+	str := buf.String()
+	return str
+}
+
+func getHtml(html_path string) (io.ReadCloser, bool) {
+	res, err := http.Get(html_path)
+	if err != nil {
+		log.Printf("[FetchHtml][%s] %s\n", html_path, err)
+		return nil, false
+	}
+	if res.StatusCode != 200 {
+		log.Printf("[FetchHtml][%s] %s (%d)\n", html_path, res.Status, res.StatusCode)
+		return nil, false
+	}
+	return res.Body, true
 }

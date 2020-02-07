@@ -47,7 +47,7 @@ func main() {
 		}
 
 		ivalue := []interface{}{}
-		res, err := GetTopicData(topic_name[0], term[0])
+		res, err := GetValue(topic_name[0], term[0])
 		if err == nil {
 			for _, val := range res {
 				nowvalue := []interface{}{val.Time * 1000, val.Value}
