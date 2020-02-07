@@ -64,7 +64,7 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 
 		cres, csucc := process_callback(resjson)
 		if !csucc {
-			log.Printf("[FetchJson][%s] Process callback failure\n", html_path)
+			log.Printf("[FetchJson][%s] Process callback failure (%s)\n", html_path, cres)
 			continue
 		}
 
@@ -73,7 +73,10 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 			log.Printf("[FetchJson][%s] '%s' → float64 : %s \n", html_path, hres, err)
 			continue
 		}
-		topicValue[topic_name] = newTopicData(fres)
+
+		tdata := newTopicData(fres)
+		AddValue(topic_name, tdata)
+		topicValue[topic_name] = tdata
 	}
 }
 

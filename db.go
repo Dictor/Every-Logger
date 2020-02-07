@@ -10,19 +10,19 @@ import (
 
 type dbTableKind string
 
-var dbTableNames = [...]dbTableKind{"TOPIC_DATA_test", "TOPIC_DATA_btcusd"}
 var dbHandlers map[dbTableKind]*badger.DB
 
 func OpenDB(root_dir string) {
 	dbHandlers = make(map[dbTableKind]*badger.DB)
-	for _, name := range dbTableNames {
-		dir := root_dir + "/db/" + string(name)
+	for name, _ := range topicDetail {
+		dbname := dbTableKind("TOPIC_DATA_" + name)
+		dir := root_dir + "/db/" + string(dbname)
 		prepareDirectory(dir)
 		db, err := badger.Open(badger.DefaultOptions(dir))
 		if err != nil {
 			log.Fatal(err)
 		} else {
-			dbHandlers[name] = db
+			dbHandlers[dbname] = db
 		}
 	}
 }
