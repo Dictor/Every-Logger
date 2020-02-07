@@ -84,9 +84,9 @@ func isAnotherTerm(last_time int, now_time int, term string) bool {
 	diff := cnow_time.Sub(clast_time)
 
 	var param, difflimit int
-	param, _ = strconv.Atoi(string(term[0]))
+	param, _ = strconv.Atoi(string(term[0 : len(term)-1]))
 
-	switch string(term[1]) {
+	switch string(term[len(term)-1]) {
 	case "s":
 		difflimit = 1
 	case "m":
