@@ -97,6 +97,8 @@ func isAnotherTerm(last_time int, now_time int, term string) bool {
 		difflimit = 60
 	case "h":
 		difflimit = 3600
+	case "d":
+		difflimit = 86400
 	}
 
 	if diff.Seconds() >= float64(param*difflimit) {
