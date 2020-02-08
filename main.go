@@ -37,7 +37,7 @@ func main() {
 		},
 	}))
 	main_server.HTTPErrorHandler = func(err error, cxt echo.Context) {
-		log.Println(makeLogPrefix(cxt, "HTTP_ERROR"), err)
+		log.Println(makeEchoPrefix(cxt, "HTTP_ERROR"), err)
 		main_server.DefaultHTTPErrorHandler(err, cxt)
 	}
 

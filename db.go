@@ -41,9 +41,9 @@ func AddValue(topic_name string, data *topicData) error {
 	return err
 }
 
-func GetValue(topic_name string, term string) ([]*topicData, error) {
+func GetValue(topic_name string, term string, max_count int) ([]*topicData, error) {
 	//term: 1s, 1m, 1h, 1d, 1m
-	var last_time_key int
+	var last_time_key, now_count int
 	topic_by_term := []*topicData{}
 
 	err := getDbHandler(topic_name).View(func(txn *badger.Txn) error {
@@ -64,6 +64,7 @@ func GetValue(topic_name string, term string) ([]*topicData, error) {
 				}
 
 				if isAnotherTerm(last_time_key, pk, term) {
+					now_count++
 					topic_by_term = append(topic_by_term, &topicData{pk, pv})
 					last_time_key = pk
 				}
@@ -71,6 +72,9 @@ func GetValue(topic_name string, term string) ([]*topicData, error) {
 			})
 			if err != nil {
 				return err
+			}
+			if now_count >= max_count {
+				return nil
 			}
 		}
 		return nil

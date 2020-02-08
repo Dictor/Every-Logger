@@ -30,8 +30,14 @@ func rHistory(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]interface{}{"result": false, "msg": "Invalid term"})
 	}
 
+	smax_count := c.QueryParam("max")
+	max_count := 100
+	if val, err := strconv.Atoi(smax_count); err == nil {
+		max_count = val
+	}
+
 	result := []interface{}{}
-	if res, err := GetValue(topic_name, term); err == nil {
+	if res, err := GetValue(topic_name, term, max_count); err == nil {
 		for _, val := range res {
 			now_value := []interface{}{val.Time * 1000, val.Value} //js uses timestamp with millisec while golang uses sec
 			result = append(result, now_value)
