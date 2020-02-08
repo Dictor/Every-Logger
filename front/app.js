@@ -35,9 +35,10 @@ var View = {
         Ws.conn.onopen = async function(evt) {
             Ws.Send("TOPIC,"+topic);
             Model.History[Model.Term] = await API.GetValueHistory(topic, Model.Term);
+            Model.History["1d"] = await API.GetValueHistory(topic, "1d");
             let m = Model.History[Model.Term];
             View.DrawChart(m);
-            Model.ValueLastTerm = Number(m[m.length - 1][1]);
+            Model.ValueLastTerm = Number(Model.History["1d"][Model.History["1d"].length - 2][1]);
         }
         setInterval(function() {
                 Model.RecievedDateDelta = (Date.now() - Model.RecievedDate) / 1000;
@@ -62,6 +63,11 @@ var View = {
                 type: 'datetime',
                 title: {
                     text: '시간'
+                }
+            },
+            yAxis: {
+                title: {
+                    text: ''
                 }
             },
             plotOptions: {
