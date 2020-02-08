@@ -7,7 +7,7 @@ var Model = {
     ValueDelta: 0.0,
     RecievedDateDelta: 0.0,
     RecievedDate: 0,
-    Term: ((this.Term = (new URL(window.location)).searchParams.get('term')) ? this.Term : "1m"),
+    Term: ((this.Term = (new URL(window.location)).searchParams.get('term')) ? this.Term : "10m"),
     ErrorMsg: "",
     Chart: null,
     NowTab: 0,
