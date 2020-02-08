@@ -71,9 +71,9 @@
 			    <div id="container"></div>
 			</figure>
 			
-			<div id="table-wrapper" class="table-reponsive" v-if="History[Term] !== undefined">
+			<div id="table-wrapper" class="table-reponsive" v-show="NowTab == 1" v-if="History[Term] !== undefined">
 				<p>총 {{ History[Term].length }}개의 데이터가 있습니다.</p>
-				<table class="table table-dark" v-show="NowTab == 1">
+				<table class="table table-dark" >
 					<thead>
 					    <tr>
 					      <th scope="col">시간</th>
