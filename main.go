@@ -1,13 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/dictor/justlog"
 	ws "github.com/dictor/wswrapper"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"log"
-	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,55 +19,35 @@ func main() {
 	log_path := justlog.MustPath(justlog.SetPath())
 	defer (justlog.MustStream(justlog.SetStream(log_path))).Close()
 
-	hub := ws.NewHub()
-	go hub.Run(wsEvent)
-	go sendInfo(hub)
-
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
 	InitFetchTopic()
 
-	staticFs := http.FileServer(http.Dir("front"))
-	http.Handle("/", staticFs)
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		hub.AddClient(w, r)
-	})
-	http.HandleFunc("/ival", func(w http.ResponseWriter, r *http.Request) {
-		topic_name, ok := r.URL.Query()["topic"]
-		if !ok {
-			return
-		}
-		_, topic_vaild := topicDetail[topic_name[0]]
-		if !topic_vaild {
-			return
-		}
+	hub := ws.NewHub()
+	go hub.Run(wsEvent)
+	go PublishValue(hub)
 
-		term, ok := r.URL.Query()["term"]
-		if !ok {
-			return
-		}
+	main_server := echo.New()
+	SetRouting(main_server, hub)
+	request_count := 0
+	main_server.Use(middleware.RequestIDWithConfig(middleware.RequestIDConfig{
+		Generator: func() string {
+			request_count++
+			return strconv.Itoa(request_count)
+		},
+	}))
+	main_server.HTTPErrorHandler = func(err error, cxt echo.Context) {
+		log.Println(makeLogPrefix(cxt, "HTTP_ERROR"), err)
+		main_server.DefaultHTTPErrorHandler(err, cxt)
+	}
 
-		ivalue := []interface{}{}
-		res, err := GetValue(topic_name[0], term[0])
-		if err == nil {
-			for _, val := range res {
-				nowvalue := []interface{}{val.Time * 1000, val.Value}
-				ivalue = append(ivalue, nowvalue)
-			}
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(ivalue)
-		}
-	})
-
-	log.Println("[SERVER START]")
 	var addr string
 	flag.StringVar(&addr, "addr", ":80", "Server address")
 	flag.IntVar(&sendPeriod, "sp", 2500, "Websocket sending term")
 	flag.IntVar(&dataPeriod, "fp", 10000, "Fetching data term")
-	err := http.ListenAndServe(addr, nil)
-	if err != nil {
-		log.Fatal("[SERVER ERROR] ", err)
-	}
+
+	log.Println("[SERVER START]")
+	log.Fatal("[SERVER TERMINATED] ", main_server.Start(addr))
 }
 
 func wsEvent(evt *ws.WebsocketEvent) {
@@ -99,7 +80,7 @@ func wsEvent(evt *ws.WebsocketEvent) {
 	}
 }
 
-func sendInfo(h *ws.WebsocketHub) {
+func PublishValue(h *ws.WebsocketHub) {
 	for {
 		for cli, _ := range h.Clients() {
 			valt, okt := clientTopic[cli]
@@ -114,4 +95,17 @@ func sendInfo(h *ws.WebsocketHub) {
 
 func makeWsPrefix(cli *ws.WebsocketClient) string {
 	return fmt.Sprintf("[%s][%d]", cli.Connection().RemoteAddr(), cli.Hub().Clients()[cli])
+}
+
+func makeEchoPrefix(cxt echo.Context, func_name string) string {
+	id := cxt.Request().Header.Get(echo.HeaderXRequestID)
+	if id == "" {
+		id = cxt.Response().Header().Get(echo.HeaderXRequestID)
+	}
+	var params = [...]string{func_name, id, cxt.RealIP(), cxt.Request().URL.String()}
+	var result string
+	for _, val := range params {
+		result += "[" + val + "]"
+	}
+	return result
 }
