@@ -17,7 +17,7 @@ function RequestXhrGetPromise(verb) {
 
 class API {
     static async GetValueHistory(topic_name, data_term) {
-        let data = await RequestXhrGetPromise("history/" + topic_name + "/" + data_term);
+        let data = await RequestXhrGetPromise("api/history/" + topic_name + "/" + data_term);
         data = JSON.parse(data);
         if (!data["result"]) {
             Model.ErrorMsg = "Retrieve data failure : " + data["msg"];

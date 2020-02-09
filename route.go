@@ -12,11 +12,16 @@ import (
 )
 
 func SetRouting(e *echo.Echo, h *ws.WebsocketHub) {
+	/* Websocket*/
 	e.GET("/ws", func(c echo.Context) error {
 		h.AddClient(c.Response().Writer, c.Request())
 		return nil
 	})
-	e.GET("/history/:topic/:term", rHistory)
+
+	/* API */
+	e.GET("/api/history/:topic/:term", rHistory)
+
+	/* Frontend serving */
 	e.Static("/static", "front/static")
 	e.GET("/*", rFront)
 }
