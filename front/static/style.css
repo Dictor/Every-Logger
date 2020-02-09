@@ -76,7 +76,7 @@ body {
     justify-content: center;
 }
 
-.nav, #tab {
+.nav, #tab, #content {
     margin: 1em;
 }
 

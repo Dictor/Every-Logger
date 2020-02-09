@@ -1,3 +1,4 @@
+<script src="./static/app_topic.js"></script>
 <body onload="javascript:View.Init((new URL(window.location)).searchParams.get('id'))">
 	    <!-- Navbar for branding -->
 	    <nav class="navbar navbar-dark">
@@ -13,7 +14,7 @@
 						<p id="info-detail">{{ TopicDetail }}</p>
 					</div>
 					<div class="col-sm-4 flex-align">
-						<p id="info-value" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }">{{ Value.toFixed(2) }}</p>
+						<p id="info-value" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }">{{ RecievedDate != 0 ? Value.toFixed(2) : "..." }}</p>
 						<p id="info-date" v-show="RecievedDate != 0">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
 						<p id="info-delta" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }" v-show="isFinite(ValueDelta)">전일대비 {{ ValueDelta > 0 ? "+" : "" }}{{ ValueDelta.toFixed(2) }}%</p>
 					</div>

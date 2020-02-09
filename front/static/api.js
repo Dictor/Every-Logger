@@ -26,4 +26,24 @@ class API {
             return data["value"];
         }
     }
+    
+    static async GetTopicDetail() {
+        let data = await RequestXhrGetPromise("api/topic");
+        return JSON.parse(data);
+    }
+}
+
+class WS {
+    constructor(cb_open, cb_msg) {
+        this.conn = new WebSocket("ws://" + document.location.host + "/ws");
+        this.conn.onclose = function (evt) {
+            Model.ErrorMsg = "Websocket closed, Please refresh this page.";
+        };
+        this.conn.onopen = cb_open;
+        this.conn.onmessage = cb_msg;
+    }
+    
+    Send(val) {
+        this.conn.send(val);
+    }
 }

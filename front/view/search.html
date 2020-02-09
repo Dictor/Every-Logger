@@ -1,0 +1,39 @@
+<script src="./static/app_search.js"></script>
+<body onload="javascript:View.Init()">
+    <!-- Navbar for branding -->
+	<nav id="menu" class="navbar navbar-dark navbar-expand-lg">
+	    <a class="navbar-brand" href="#">Every Logger</a>
+	    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+			<div class="navbar-nav">
+			    <template v-for="item in Menu">
+			    	<a class="nav-item nav-link" v-on:click="NowMenu = item" v-bind:class="{'active': NowMenu == item}">{{ item }}</a>
+			    </template>
+			</div>
+		</div>
+	</nav>
+	
+	<div id="content">
+		<div id="table-wrapper" class="table-reponsive" v-show="NowMenu == '전체 토픽'" v-if="TopicDetail !== null">
+			<p style="text-align: center;">총 {{ Object.keys(TopicDetail).length }}개의 토픽이 있습니다.</p>
+			<table class="table table-dark table-hover" >
+				<thead>
+					<tr>
+					<th scope="col">토픽 ID</th>
+					<th scope="col">토픽 이름</th>
+					</tr>
+				</thead>
+				<tbody>
+				<template v-for="item in Object.keys(TopicDetail)">
+				  	<tr v-on:click="goTopic(item)">
+				  		<td scope="row">{{ item }}</th>	
+				  		<td>{{ TopicDetail[item]["name"] }}</td>
+				  	</tr>
+				</template>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
