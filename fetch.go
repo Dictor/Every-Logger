@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/chromedp/chromedp"
 	"io"
 	"log"
 	"math/rand"
@@ -51,11 +53,12 @@ func FetchHtml(topic_name string, html_path string, f func(*goquery.Document) st
 	}
 }
 
-func FetchJson(topic_name string, html_path string, process_callback func(map[string]interface{}) (string, bool)) {
+func FetchJson(topic_name string, html_path string, process_callback func(map[string]interface{}) (float64, bool)) {
 	for {
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 		hres, succ := getHtml(html_path)
 		if !succ {
+			log.Printf("[FetchJson][%s] Get html document failure (%s)\n", html_path, hres)
 			continue
 		}
 		rawjson := []byte(streamToString(hres))
@@ -68,13 +71,39 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 			continue
 		}
 
-		fres, err := strconv.ParseFloat(cres, 64)
+		tdata := newTopicData(cres)
+		AddValue(topic_name, tdata)
+		topicValue[topic_name] = tdata
+	}
+}
+
+func FetchChrome(topic_name string, url string, selector string, process_callback func(val string) (float64, bool)) {
+	ctx, close_ctx := chromedp.NewContext(
+		context.Background(),
+		chromedp.WithLogf(log.Printf),
+	)
+	defer close_ctx()
+
+	for {
+		var res string
+		err := chromedp.Run(ctx,
+			chromedp.Navigate(url),
+			//chromedp.WaitVisible(selector),
+			chromedp.Sleep(time.Second*3),
+			chromedp.Text(selector, &res),
+		)
 		if err != nil {
-			log.Printf("[FetchJson][%s] '%s' → float64 : %s \n", html_path, hres, err)
+			log.Printf("[FetchChrome][%s] Running chrome failure (%s)\n", url, err)
 			continue
 		}
 
-		tdata := newTopicData(fres)
+		cres, csucc := process_callback(res)
+		if !csucc {
+			log.Printf("[FetchChrome][%s] Process callback failure (%s)\n", url, cres)
+			continue
+		}
+
+		tdata := newTopicData(cres)
 		AddValue(topic_name, tdata)
 		topicValue[topic_name] = tdata
 	}

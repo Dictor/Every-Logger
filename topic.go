@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -24,13 +25,22 @@ func InitFetchTopic() {
 	clientTopic = make(map[*ws.WebsocketClient]string)
 
 	go FetchRandom("test")
-	go FetchJson("btcusd", "https://api.cryptowat.ch/markets/bitfinex/btcusd/price", func(data map[string]interface{}) (string, bool) {
+	go FetchJson("btcusd", "https://api.cryptowat.ch/markets/bitfinex/btcusd/price", func(data map[string]interface{}) (float64, bool) {
 		price, ok := (data["result"].(map[string]interface{}))["price"].(float64)
 		if !ok {
-			return "", false
+			return 0.0, false
 		} else {
-			return strconv.FormatFloat(price, 'f', -1, 64), true
+			return price, true
 		}
+	})
+	go FetchChrome("2019ncov-w", "https://wuhanvirus.kr/", ".world .number", func(val string) (float64, bool) {
+		ival, err := strconv.Atoi(strings.Replace(val, ",", "", 1))
+		if err != nil {
+			return 0.0, false
+		} else {
+			return float64(ival), true
+		}
+
 	})
 	/*
 		go FetchJson("2019ncov-w", "https://wuhanvirus.kr/stat.json", func(data map[string]interface{}) (string, bool) {
