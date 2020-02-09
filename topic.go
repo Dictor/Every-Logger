@@ -33,7 +33,7 @@ func InitFetchTopic() {
 			return price, true
 		}
 	})
-	go FetchChrome("2019ncov-w", "https://wuhanvirus.kr/", ".world .number", func(val string) (float64, bool) {
+	go FetchChrome("2019ncov-w", "https://ncov.dxy.cn/ncovh5/view/pneumonia", ".count___3GCdh > li:nth-child(1) > strong", func(val string) (float64, bool) {
 		ival, err := strconv.Atoi(strings.Replace(val, ",", "", 1))
 		if err != nil {
 			return 0.0, false
@@ -43,18 +43,14 @@ func InitFetchTopic() {
 
 	})
 	/*
-		go FetchJson("2019ncov-w", "https://wuhanvirus.kr/stat.json", func(data map[string]interface{}) (string, bool) {
-			idata, ok := (data["chart"].(map[string]interface{}))["global"].([]interface{})
-			if !ok {
-				return "retrieve idata fail", false
+		go FetchChrome("2019ncov-w", "https://wuhanvirus.kr/", ".world .number", func(val string) (float64, bool) {
+			ival, err := strconv.Atoi(strings.Replace(val, ",", "", 1))
+			if err != nil {
+				return 0.0, false
 			} else {
-				pdata, ok := idata[len(idata)-1].([]interface{})[1].(float64)
-				if !ok {
-					return "retrieve pdata fail", false
-				} else {
-					return strconv.FormatFloat(pdata, 'f', -1, 64), true
-				}
+				return float64(ival), true
 			}
+
 		})
 	*/
 }
