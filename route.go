@@ -20,10 +20,16 @@ func SetRouting(e *echo.Echo, h *ws.WebsocketHub) {
 
 	/* API */
 	e.GET("/api/history/:topic/:term", rHistory)
+	e.GET("/api/topic", rTopic)
 
 	/* Frontend serving */
 	e.Static("/static", "front/static")
 	e.GET("/*", rFront)
+}
+
+func rTopic(c echo.Context) error {
+	log.Println(makeEchoPrefix(c, "rTopic"))
+	return c.JSON(http.StatusOK, topicDetail)
 }
 
 func rFront(c echo.Context) error {

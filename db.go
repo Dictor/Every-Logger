@@ -44,10 +44,12 @@ func AddValue(topic_name string, data *topicData) error {
 func GetValue(topic_name string, term string, max_count int) ([]*topicData, error) {
 	//term: 1s, 1m, 1h, 1d, 1m
 	var last_time_key, now_count int
+	last_time_key = 99999999999999
 	topic_by_term := []*topicData{}
 
 	err := getDbHandler(topic_name).View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
+		opts.Reverse = true
 		it := txn.NewIterator(opts)
 		defer it.Close()
 		for it.Rewind(); it.Valid(); it.Next() {
@@ -62,8 +64,7 @@ func GetValue(topic_name string, term string, max_count int) ([]*topicData, erro
 				if err != nil {
 					return err
 				}
-
-				if isAnotherTerm(last_time_key, pk, term) {
+				if isAnotherTerm(pk, last_time_key, term) {
 					now_count++
 					topic_by_term = append(topic_by_term, &topicData{pk, pv})
 					last_time_key = pk

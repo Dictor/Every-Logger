@@ -30,6 +30,14 @@
 				<li class="nav-item">
 					<a class="nav-link" v-on:click="NowTab = 1" v-bind:class="{ active: NowTab == 1}">표</a>
 				</li>
+				<div class="dropdown">
+					<button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">{{ HumanTerm(Term) }}</button>
+					<div class="dropdown-menu dropdown-menu-right">
+				  		<template v-for="item in TermList">
+				  			<a class="dropdown-item" v-on:click="TermChange(item)">{{ HumanTerm(item) }}</a>
+				  		</template>
+					</div>
+				</div>
 			</ul>
 		    
 		    <!-- Value display and infographics (graph, table and more?) -->

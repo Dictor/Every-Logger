@@ -1,17 +1,30 @@
-var Model = {
+var  Model = {
+    TopicId: "",
     TopicName: "",
     TopicDetail: "",
+    
     Value: 0.0,
     ValueLastTerm: 0.0,
     ValueDate: 0,
     ValueDelta: 0.0,
+    
     RecievedDateDelta: 0.0,
     RecievedDate: 0,
+    
     Term: ((this.Term = (new URL(window.location)).searchParams.get('term')) ? this.Term : "10m"),
+    TermList: ["1s", "1m", "10m", "1h", "1d"],
+    TermChange: async function(t) {
+        await View.ChangeTerm(t);
+    },
+    HumanTerm: function(t) {
+        let post = t[t.length - 1];
+        return t.replace(post, ["초", "분", "시간", "일"]["smhd".indexOf(post)]);
+    },
+    History: {},
+    
     ErrorMsg: "",
     Chart: null,
     NowTab: 0,
-    History: {},
     moment: moment
 };
 
@@ -31,6 +44,7 @@ var View = {
             Model.ErrorMsg = "Invalid topic name.";
             return;
         }
+        Model.TopicId = topic;
         Ws.Init();
         Ws.conn.onopen = async function(evt) {
             Ws.Send("TOPIC,"+topic);
@@ -43,6 +57,13 @@ var View = {
         setInterval(function() {
                 Model.RecievedDateDelta = (Date.now() - Model.RecievedDate) / 1000;
         }, 100);
+    },
+    ChangeTerm: async function(term) {
+        Model.Term = term;
+        if (Model.History[term] === undefined) {
+            Model.History[term]  = await API.GetValueHistory(Model.TopicId, term);
+        }
+        this.DrawChart(Model.History[term]);
     },
     DrawChart: function(ivalue) {
         Highcharts.setOptions({

@@ -84,3 +84,7 @@ body {
     max-height: 35rem;
     overflow-y: auto;
 }
+
+.nav-tabs .dropdown {
+    margin-left: auto;
+}
