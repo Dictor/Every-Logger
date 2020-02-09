@@ -39,7 +39,11 @@ func rFront(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	tchild, err := ioutil.ReadFile("front/view/" + sanitize.BaseName(c.Param("*")) + ".html")
+	path := "search"
+	if c.Param("*") != "" {
+		path = c.Param("*")
+	}
+	tchild, err := ioutil.ReadFile("front/view/" + sanitize.BaseName(path) + ".html")
 	if err != nil {
 		log.Printf("%s %s", makeEchoPrefix(c, "rFront"), err)
 		return c.NoContent(http.StatusNotFound)
