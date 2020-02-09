@@ -27,70 +27,10 @@
 		<!--vuejs (for develope)-->
 		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 		
-		<link href="./sm_style.css" rel="stylesheet" type="text/css">
-		<link href="./style.css" rel="stylesheet" type="text/css">
-		<script src="./app.js"></script>
-		<script src="./api.js"></script>
+		<link href="./static/sm_style.css" rel="stylesheet" type="text/css">
+		<link href="./static/style.css" rel="stylesheet" type="text/css">
+		<script src="./static/app.js"></script>
+		<script src="./static/api.js"></script>
 	</head>
-	<body onload="javascript:View.Init((new URL(window.location)).searchParams.get('topic'))">
-	    <!-- Navbar for branding -->
-	    <nav class="navbar navbar-dark">
-	    	<a class="navbar-brand" href="#">Every Logger</a>
-		</nav>
-		
-	    <!-- Jumbotron for Variable's information -->
-	    <div id="info" class="info" v-bind:class="{ 'info-errorbg': ErrorMsg != ''}">
-	    	<div id="info-content" class="container-fluid" v-show="ErrorMsg == ''">
-	    		<div class="row">
-					<div class="col-sm-8">
-						<p id="info-name">{{ TopicName }}</p>
-						<p id="info-detail">{{ TopicDetail }}</p>
-					</div>
-					<div class="col-sm-4 flex-align">
-						<p id="info-value" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }">{{ Value.toFixed(2) }}</p>
-						<p id="info-date" v-show="RecievedDate != 0">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
-						<p id="info-delta" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }" v-show="isFinite(ValueDelta)">전일대비 {{ ValueDelta > 0 ? "+" : "" }}{{ ValueDelta.toFixed(2) }}%</p>
-					</div>
-				</div>
-			</div>
-			<div id="info-error" v-show="ErrorMsg != ''"><p class="info-error-title">Unexpected error caused!</p><p id="info-error-msg">{{ ErrorMsg }}</p></div>
-	    </div>
-	    
-	    <div id="tab">
-	    	<ul class="nav nav-tabs">
-				<li class="nav-item">
-					<a class="nav-link" v-on:click="NowTab = 0" v-bind:class="{ active: NowTab == 0}">그래프</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" v-on:click="NowTab = 1" v-bind:class="{ active: NowTab == 1}">표</a>
-				</li>
-			</ul>
-		    
-		    <!-- Value display and infographics (graph, table and more?) -->
-		    <figure class="highcharts-figure" v-show="NowTab == 0">
-			    <div id="container"></div>
-			</figure>
-			
-			<div id="table-wrapper" class="table-reponsive" v-show="NowTab == 1" v-if="History[Term] !== undefined">
-				<p>총 {{ History[Term].length }}개의 데이터가 있습니다.</p>
-				<table class="table table-dark" >
-					<thead>
-					    <tr>
-					      <th scope="col">시간</th>
-					      <th scope="col">값</th>
-					    </tr>
-				  	</thead>
-				  	<tbody>
-				  		<template v-for="item in History[Term].slice().reverse()">
-				  			<tr>
-				  				<td scope="row">{{ moment(item[0]).format("YY/MM/DD HH:mm:ss") }}</th>	
-				  				<td>{{ item[1] }}</td>
-				  			</tr>
-						</template>
-				  	</tbody>
-				  </table>
-			</div>
-	    </div>
-	    
-	</body>
+	{view}
 </html>

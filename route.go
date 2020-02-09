@@ -2,7 +2,9 @@ package main
 
 import (
 	ws "github.com/dictor/wswrapper"
+	"github.com/kennygrant/sanitize"
 	"github.com/labstack/echo/v4"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,7 +17,25 @@ func SetRouting(e *echo.Echo, h *ws.WebsocketHub) {
 		return nil
 	})
 	e.GET("/history/:topic/:term", rHistory)
-	e.Static("/", "front")
+	e.Static("/static", "front/static")
+	e.GET("/*", rFront)
+}
+
+func rFront(c echo.Context) error {
+	tparent, err := ioutil.ReadFile("front/index.html")
+	if err != nil {
+		log.Printf("%s %s", makeEchoPrefix(c, "rFront"), err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	tchild, err := ioutil.ReadFile("front/view/" + sanitize.BaseName(c.Param("*")) + ".html")
+	if err != nil {
+		log.Printf("%s %s", makeEchoPrefix(c, "rFront"), err)
+		return c.NoContent(http.StatusNotFound)
+	}
+
+	log.Printf("%s %d", makeEchoPrefix(c, "rFront"), http.StatusOK)
+	return c.HTML(http.StatusOK, strings.Replace(string(tparent), "{view}", string(tchild), -1))
 }
 
 func rHistory(c echo.Context) error {
