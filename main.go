@@ -45,6 +45,7 @@ func main() {
 	flag.StringVar(&addr, "addr", ":80", "Server address")
 	flag.IntVar(&sendPeriod, "sp", 2500, "Websocket sending term")
 	flag.IntVar(&dataPeriod, "fp", 10000, "Fetching data term")
+	flag.Parse()
 
 	log.Println("[SERVER START]")
 	log.Fatal("[SERVER TERMINATED] ", main_server.Start(addr))
