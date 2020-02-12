@@ -18,7 +18,7 @@ func OpenDB(root_dir string) {
 		dbname := dbTableKind("TOPIC_DATA_" + name)
 		dir := root_dir + "/db/" + string(dbname)
 		prepareDirectory(dir)
-		db, err := badger.Open(badger.DefaultOptions(dir))
+		db, err := badger.Open(badger.DefaultOptions(dir).WithTruncate(true))
 		if err != nil {
 			log.Fatal(err)
 		} else {
