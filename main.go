@@ -95,6 +95,9 @@ func PublishValue(h *ws.WebsocketHub) {
 }
 
 func makeWsPrefix(cli *ws.WebsocketClient) string {
+	if cli == nil {
+		return "[?]"
+	}
 	return fmt.Sprintf("[%s][%d]", cli.Connection().RemoteAddr(), cli.Hub().Clients()[cli])
 }
 
