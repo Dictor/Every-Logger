@@ -22,6 +22,7 @@ var sendPeriod, dataPeriod int
 var config map[string]interface{}
 
 func main() {
+	attachInterruptHandler()
 	log_path := justlog.MustPath(justlog.SetPath())
 	defer (justlog.MustStream(justlog.SetStream(log_path))).Close()
 
