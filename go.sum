@@ -30,8 +30,12 @@ github.com/dictor/wswrapper v1.0.0 h1:nC+afufS1xpojT6oP5gKqN0PZs5zmNBwiIWfG7gX29
 github.com/dictor/wswrapper v1.0.0/go.mod h1:xC2aDqv0tVLsWFF0HlbZqRVftVUu/r6N8pRlwjCxpd4=
 github.com/dictor/wswrapper v1.0.1-0.20200201040548-7881e96db067 h1:zL7i7YFyD7BfJSiCxFrraUm2om6/HSQk3Rm9vtKAXRA=
 github.com/dictor/wswrapper v1.0.1-0.20200201040548-7881e96db067/go.mod h1:xC2aDqv0tVLsWFF0HlbZqRVftVUu/r6N8pRlwjCxpd4=
+github.com/dictor/wswrapper v1.0.1-0.20200213052325-36ef01d541a1 h1:YubeVTyREQ/y5GqQPDNcHdOw+oifWW5PSlmpcYJreNo=
+github.com/dictor/wswrapper v1.0.1-0.20200213052325-36ef01d541a1/go.mod h1:xC2aDqv0tVLsWFF0HlbZqRVftVUu/r6N8pRlwjCxpd4=
 github.com/dictor/wswrapper v1.0.1 h1:gTXrbmBW+MyGeb/+tnPraKtqP+SlW1ZV5cSv8XZ6Vn4=
 github.com/dictor/wswrapper v1.0.1/go.mod h1:xC2aDqv0tVLsWFF0HlbZqRVftVUu/r6N8pRlwjCxpd4=
+github.com/dictor/wswrapper v1.1.1-0.20200214030922-4ed494ffe14e h1:gKzwWrn6pGDYh/MZHJTjni+ScR9oUrJuuraaqM4GKUA=
+github.com/dictor/wswrapper v1.1.1-0.20200214030922-4ed494ffe14e/go.mod h1:xC2aDqv0tVLsWFF0HlbZqRVftVUu/r6N8pRlwjCxpd4=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
