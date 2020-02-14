@@ -1,19 +1,25 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/dictor/justlog"
 	ws "github.com/dictor/wswrapper"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"io/ioutil"
 	"log"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
 var sendPeriod, dataPeriod int
+var config map[string]interface{}
 
 func main() {
 	log_path := justlog.MustPath(justlog.SetPath())
@@ -28,7 +34,6 @@ func main() {
 	go PublishValue(hub)
 
 	main_server := echo.New()
-	SetRouting(main_server, hub)
 	request_count := 0
 	main_server.Use(middleware.RequestIDWithConfig(middleware.RequestIDConfig{
 		Generator: func() string {
@@ -47,8 +52,33 @@ func main() {
 	flag.IntVar(&dataPeriod, "fp", 10000, "Fetching data term")
 	flag.Parse()
 
+	config := map[string]interface{}{}
+	BindFileToJson(justlog.ExePath+"/config.json", &config)
+	ws_origin := config["ws_origin"].([]interface{})
+	sws_origin := []string{}
+	for _, val := range ws_origin {
+		sws_origin = append(sws_origin, val.(string))
+	}
+	log.Printf("%d origins added to websocket upgrader", len(sws_origin))
+	hub.AddUpgraderOrigin(sws_origin)
+
+	SetRouting(main_server, hub)
 	log.Println("[SERVER START]")
 	log.Fatal("[SERVER TERMINATED] ", main_server.Start(addr))
+}
+
+func attachInterruptHandler() {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		log.Println("Terminal interrupt detected!")
+		CloseDB()
+		close(InterruptNotice)
+		InterruptCounter.Wait()
+		log.Println("Closing process is finished! Goodbye!")
+		os.Exit(0)
+	}()
 }
 
 func wsEvent(evt *ws.WebsocketEvent) {
@@ -112,4 +142,12 @@ func makeEchoPrefix(cxt echo.Context, func_name string) string {
 		result += "[" + val + "]"
 	}
 	return result
+}
+
+func BindFileToJson(file_path string, data *map[string]interface{}) {
+	rawjson, err := ioutil.ReadFile(file_path)
+	if err != nil {
+		log.Panic(err)
+	}
+	json.Unmarshal(rawjson, &data)
 }

@@ -1,11 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	//"github.com/PuerkitoBio/goquery"
 	ws "github.com/dictor/wswrapper"
-	"io/ioutil"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -40,28 +37,13 @@ func InitFetchTopic() {
 		} else {
 			return float64(ival), true
 		}
-
 	})
-	/*
-		go FetchChrome("2019ncov-w", "https://wuhanvirus.kr/", ".world .number", func(val string) (float64, bool) {
-			ival, err := strconv.Atoi(strings.Replace(val, ",", "", 1))
-			if err != nil {
-				return 0.0, false
-			} else {
-				return float64(ival), true
-			}
-
-		})
-	*/
 }
 
 func BindTopicInfo(root_dir string) {
 	prepareDirectory(root_dir + "/db")
-	rawjson, err := ioutil.ReadFile(root_dir + "/db/topic_detail.json")
-	if err != nil {
-		log.Panic(err)
-	}
-	json.Unmarshal(rawjson, &topicDetail)
+	topicDetail = map[string]interface{}{}
+	BindFileToJson(root_dir+"/db/topic_detail.json", &topicDetail)
 }
 
 func newTopicData(val float64) *topicData {
