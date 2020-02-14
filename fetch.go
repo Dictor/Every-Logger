@@ -13,7 +13,13 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
+)
+
+var (
+	InterruptNotice  chan bool      = make(chan bool)
+	InterruptCounter sync.WaitGroup = sync.WaitGroup{}
 )
 
 func newGoqDoc(html_path string) (*goquery.Document, bool) {
@@ -78,11 +84,16 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 }
 
 func FetchChrome(topic_name string, url string, selector string, process_callback func(val string) (float64, bool)) {
+	InterruptCounter.Add(1)
 	ctx, close_ctx := chromedp.NewContext(
 		context.Background(),
 		chromedp.WithLogf(log.Printf),
 	)
-	defer close_ctx()
+	defer func() {
+		close_ctx()
+		InterruptCounter.Done()
+		log.Printf("[FetchChrome]Chrome context %p is closed!", ctx)
+	}()
 
 	for {
 		var res string
@@ -106,6 +117,11 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 		tdata := newTopicData(cres)
 		AddValue(topic_name, tdata)
 		topicValue[topic_name] = tdata
+
+		_, is_open := <-InterruptNotice
+		if !is_open {
+			break
+		}
 	}
 }
 
