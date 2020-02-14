@@ -92,7 +92,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 	defer func() {
 		close_ctx()
 		InterruptCounter.Done()
-		log.Printf("[FetchChrome]Chrome context % is closed!", ctx)
+		log.Printf("[FetchChrome]Chrome context %p is closed!", ctx)
 	}()
 
 	for {
