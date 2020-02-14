@@ -18,3 +18,4 @@ log/
 db/
 every-logger
 Every-Logger
+*.json
