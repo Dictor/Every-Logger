@@ -34,10 +34,6 @@ func newGoqDoc(html_path string) (*goquery.Document, bool) {
 		return nil, false
 	}
 
-	debug, _ := os.Create("debug_html.txt")
-	defer debug.Close()
-	hres, _ := doc.Html()
-	fmt.Fprint(debug, hres)
 	return doc, true
 }
 
