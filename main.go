@@ -73,11 +73,12 @@ func attachInterruptHandler() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		log.Println("Terminal interrupt detected!")
+		log.Println("[InterruptDetector] Terminal interrupt detected!")
 		CloseDB()
 		close(InterruptNotice)
+		log.Println("[InterruptDetector] Waiting until all fetch routine is closed...")
 		InterruptCounter.Wait()
-		log.Println("Closing process is finished! Goodbye!")
+		log.Println("[InterruptDetector] Closing process is finished! Goodbye!")
 		os.Exit(0)
 	}()
 }

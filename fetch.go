@@ -92,15 +92,17 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 	defer func() {
 		close_ctx()
 		InterruptCounter.Done()
-		log.Printf("[FetchChrome]Chrome context %p is closed!", ctx)
+		log.Printf("[FetchChrome] Chrome context %p is closed!", ctx)
 	}()
 
+	var res string
+FETCH_LOOP:
 	for {
-		var res string
+		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 		err := chromedp.Run(ctx,
 			chromedp.Navigate(url),
 			//chromedp.WaitVisible(selector),
-			chromedp.Sleep(time.Second*3),
+			chromedp.Sleep(time.Second*2),
 			chromedp.Text(selector, &res),
 		)
 		if err != nil {
@@ -118,9 +120,12 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 		AddValue(topic_name, tdata)
 		topicValue[topic_name] = tdata
 
-		_, is_open := <-InterruptNotice
-		if !is_open {
-			break
+		select {
+		case _, is_open := <-InterruptNotice:
+			if !is_open {
+				break FETCH_LOOP
+			}
+		default:
 		}
 	}
 }
