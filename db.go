@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	badger "github.com/dgraph-io/badger"
 	"log"
 	"os"
@@ -18,7 +19,7 @@ func OpenDB(root_dir string) {
 		dbname := dbTableKind("TOPIC_DATA_" + name)
 		dir := root_dir + "/db/" + string(dbname)
 		prepareDirectory(dir)
-		db, err := badger.Open(badger.DefaultOptions(dir).WithTruncate(true))
+		db, err := badger.Open(badger.DefaultOptions(dir).WithTruncate(true).WithLogger(badgerLoggerAdapter{}))
 		if err != nil {
 			log.Fatal(err)
 		} else {
@@ -123,4 +124,27 @@ func prepareDirectory(dir ...string) {
 			os.Mkdir(val, 0666)
 		}
 	}
+}
+
+type badgerLoggerAdapter struct {
+}
+
+func (l badgerLoggerAdapter) logf(prifix string, format string, params ...interface{}) {
+	log.Printf("[badger](%s) %s", prifix, fmt.Sprintf(format, params...))
+}
+
+func (l badgerLoggerAdapter) Errorf(format string, params ...interface{}) {
+	l.logf("ERROR", format, params...)
+}
+
+func (l badgerLoggerAdapter) Warningf(format string, params ...interface{}) {
+	l.logf("WARN", format, params...)
+}
+
+func (l badgerLoggerAdapter) Infof(format string, params ...interface{}) {
+	l.logf("INFO", format, params...)
+}
+
+func (l badgerLoggerAdapter) Debugf(format string, params ...interface{}) {
+	l.logf("DEBUG", format, params...)
 }

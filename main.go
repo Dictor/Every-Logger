@@ -74,8 +74,8 @@ func attachInterruptHandler() {
 	go func() {
 		<-c
 		log.Println("[InterruptDetector] Terminal interrupt detected!")
-		CloseDB()
 		close(InterruptNotice)
+		CloseDB()
 		log.Println("[InterruptDetector] Waiting until all fetch routine is closed...")
 		InterruptCounter.Wait()
 		log.Println("[InterruptDetector] Closing process is finished! Goodbye!")

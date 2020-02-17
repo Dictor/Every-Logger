@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/chromedp"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -94,6 +92,12 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 	var res string
 FETCH_LOOP:
 	for {
+		select {
+		case <-InterruptNotice:
+			break FETCH_LOOP
+		default:
+		}
+
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 		err := chromedp.Run(ctx,
 			chromedp.Navigate(url),
@@ -115,14 +119,6 @@ FETCH_LOOP:
 		tdata := newTopicData(cres)
 		AddValue(topic_name, tdata)
 		topicValue[topic_name] = tdata
-
-		select {
-		case _, is_open := <-InterruptNotice:
-			if !is_open {
-				break FETCH_LOOP
-			}
-		default:
-		}
 	}
 }
 
