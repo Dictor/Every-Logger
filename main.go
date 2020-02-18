@@ -120,6 +120,8 @@ func PublishValue(h *ws.WebsocketHub) {
 			val, ok := topicValue[valt]
 			if ok && okt {
 				h.Send(cli, []byte(fmt.Sprintf("VALUE,%s,%d,%f", valt, val.Time, val.Value)))
+			} else {
+				log.Printf("[PublishValue] Publishing Error : get cli topic = %t, get topic value = %t", okt, ok)
 			}
 		}
 		time.Sleep(time.Duration(sendPeriod) * time.Millisecond)
