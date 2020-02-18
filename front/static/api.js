@@ -35,7 +35,7 @@ class API {
 
 class WS {
     constructor(cb_open, cb_msg) {
-        this.conn = new WebSocket("ws://" + document.location.host + "/ws");
+        this.conn = new WebSocket((location.protocol == "https:" ? "wss:": "ws:") + "//" + document.location.host + "/ws");
         this.conn.onclose = function (evt) {
             Model.ErrorMsg = "Websocket closed, Please refresh this page.";
         };
