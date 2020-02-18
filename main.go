@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/dictor/justlog"
-	ws "github.com/dictor/wswrapper"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"io/ioutil"
@@ -13,28 +11,25 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"syscall"
-	"time"
 )
 
 var sendPeriod, dataPeriod int
 var config map[string]interface{}
 
 func main() {
+	// Setting log and os signal handler
 	attachInterruptHandler()
 	log_path := justlog.MustPath(justlog.SetPath())
 	defer (justlog.MustStream(justlog.SetStream(log_path))).Close()
 
+	// Initiating topic data
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
 	InitFetchTopic()
 	BindLatestValue()
 
-	hub := ws.NewHub()
-	go hub.Run(wsEvent)
-	go PublishValue(hub)
-
+	// Initiation echo server
 	main_server := echo.New()
 	request_count := 0
 	main_server.Use(middleware.RequestIDWithConfig(middleware.RequestIDConfig{
@@ -48,23 +43,15 @@ func main() {
 		main_server.DefaultHTTPErrorHandler(err, cxt)
 	}
 
+	// Bind CLI parameters
 	var addr string
 	flag.StringVar(&addr, "addr", ":80", "Server address")
 	flag.IntVar(&sendPeriod, "sp", 2500, "Websocket sending term")
 	flag.IntVar(&dataPeriod, "fp", 10000, "Fetching data term")
 	flag.Parse()
 
-	config := map[string]interface{}{}
-	BindFileToJson(justlog.ExePath+"/config.json", &config)
-	ws_origin := config["ws_origin"].([]interface{})
-	sws_origin := []string{}
-	for _, val := range ws_origin {
-		sws_origin = append(sws_origin, val.(string))
-	}
-	log.Printf("%d origins added to websocket upgrader", len(sws_origin))
-	hub.AddUpgraderOrigin(sws_origin)
-
-	SetRouting(main_server, hub)
+	// Start echo server
+	SetRouting(main_server, wsInit(justlog.ExePath))
 	log.Println("[SERVER START]")
 	log.Fatal("[SERVER TERMINATED] ", main_server.Start(addr))
 }
@@ -82,58 +69,6 @@ func attachInterruptHandler() {
 		log.Println("[InterruptDetector] Closing process is finished! Goodbye!")
 		os.Exit(0)
 	}()
-}
-
-func wsEvent(evt *ws.WebsocketEvent) {
-	switch evt.Kind {
-	case ws.EVENT_RECIEVE:
-		str := string(*evt.Msg)
-		pstr := strings.Split(str, ",")
-		switch len(pstr) {
-		case 2:
-			switch pstr[0] {
-			case "TOPIC":
-				detail, ok := topicDetail[pstr[1]]
-				if ok {
-					detailval := detail.(map[string]interface{})
-					evt.Client.Hub().Send(evt.Client, []byte("TOPIC,"+detailval["name"].(string)+","+detailval["detail"].(string)))
-					log.Printf("[TOPIC CHANGE]%s : %s → %s", makeWsPrefix(evt.Client), clientTopic[evt.Client], pstr[1])
-					clientTopic[evt.Client] = pstr[1]
-				} else {
-					evt.Client.Hub().Send(evt.Client, []byte("ERROR,NOTOPIC"))
-					log.Printf("[TOPIC CHANGE]%s : %s → %s : No topic", makeWsPrefix(evt.Client), clientTopic[evt.Client], pstr[1])
-				}
-			}
-		}
-	case ws.EVENT_REGISTER:
-		log.Printf("[WS_REG]%s", makeWsPrefix(evt.Client))
-	case ws.EVENT_UNREGISTER:
-		log.Printf("[WS_UNREG]%s", makeWsPrefix(evt.Client))
-	case ws.EVENT_ERROR:
-		log.Printf("[WS_ERROR]%s %s", makeWsPrefix(evt.Client), evt.Err)
-	}
-}
-
-func PublishValue(h *ws.WebsocketHub) {
-	for {
-		for cli, _ := range h.Clients() {
-			valt, okt := clientTopic[cli]
-			val, ok := topicValue[valt]
-			if ok && okt {
-				h.Send(cli, []byte(fmt.Sprintf("VALUE,%s,%d,%f", valt, val.Time, val.Value)))
-			} else {
-				log.Printf("[PublishValue] Publishing Error : get cli topic = %t, get topic value = %t", okt, ok)
-			}
-		}
-		time.Sleep(time.Duration(sendPeriod) * time.Millisecond)
-	}
-}
-
-func makeWsPrefix(cli *ws.WebsocketClient) string {
-	if cli == nil {
-		return "[?]"
-	}
-	return fmt.Sprintf("[%s][%d]", cli.Connection().RemoteAddr(), cli.Hub().Clients()[cli])
 }
 
 func makeEchoPrefix(cxt echo.Context, func_name string) string {
