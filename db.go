@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	badger "github.com/dgraph-io/badger"
 	"log"
@@ -82,6 +83,17 @@ func GetValue(topic_name string, term string, max_count int) ([]*topicData, erro
 		return nil
 	})
 	return topic_by_term, err
+}
+
+func GetLatestValue(topic_name string) (*topicData, error) {
+	v, err := GetValue(topic_name, "1s", 1)
+	if err != nil {
+		return nil, err
+	}
+	if len(v) < 1 {
+		return nil, errors.New("Cannot find any value in this topic.")
+	}
+	return v[0], nil
 }
 
 func isAnotherTerm(last_time int, now_time int, term string) bool {

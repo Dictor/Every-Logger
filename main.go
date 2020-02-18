@@ -29,6 +29,7 @@ func main() {
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
 	InitFetchTopic()
+	BindLatestValue()
 
 	hub := ws.NewHub()
 	go hub.Run(wsEvent)

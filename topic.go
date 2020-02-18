@@ -3,6 +3,7 @@ package main
 import (
 	//"github.com/PuerkitoBio/goquery"
 	ws "github.com/dictor/wswrapper"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -44,6 +45,20 @@ func BindTopicInfo(root_dir string) {
 	prepareDirectory(root_dir + "/db")
 	topicDetail = map[string]interface{}{}
 	BindFileToJson(root_dir+"/db/topic_detail.json", &topicDetail)
+}
+
+func BindLatestValue() {
+	cnt := 0
+	for name, _ := range topicDetail {
+		val, err := GetLatestValue(name)
+		if err != nil {
+			log.Printf("[BindLatestValue] Latest value binding failure : %s", err)
+		} else {
+			topicValue[name] = val
+			cnt++
+		}
+	}
+	log.Printf("[BindLatestValue] Binding %d topics latest value", cnt)
 }
 
 func newTopicData(val float64) *topicData {
