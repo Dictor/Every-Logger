@@ -90,11 +90,10 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 	}()
 
 	var res string
-FETCH_LOOP:
 	for {
 		select {
 		case <-InterruptNotice:
-			break FETCH_LOOP
+			return
 		default:
 		}
 
