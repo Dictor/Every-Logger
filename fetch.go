@@ -81,26 +81,31 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 
 func FetchChrome(topic_name string, url string, selector string, process_callback func(val string) (float64, bool)) {
 	var (
-		res       string
-		ctx       context.Context
-		close_ctx context.CancelFunc
+		res string
+		ctx context.Context
 	)
 	var clean_loop = func() {
-		if close_ctx != nil {
-			close_ctx()
+		if ctx != nil {
+			err := chromedp.Cancel(ctx)
+			if err != nil {
+				log.Printf("[FetchChrome(%p)][%s] Context closing failure (%s)\n", ctx, topic_name, err)
+			}
 			InterruptCounter.Done()
-			log.Printf("[FetchChrome(%p)][%s] Close context complete\n", ctx, url)
+			log.Printf("[FetchChrome(%p)][%s] Context closed\n", ctx, topic_name)
 		}
 	}
 	defer clean_loop()
 
 	for {
 		clean_loop()
-		InterruptCounter.Add(1)
-		ctx, close_ctx = chromedp.NewContext(
+		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
+
+		ctx, _ = chromedp.NewContext(
 			context.Background(),
 			chromedp.WithLogf(log.Printf),
 		)
+		InterruptCounter.Add(1)
+		log.Printf("[FetchChrome(%p)][%s] Context opened\n", ctx, topic_name)
 
 		select {
 		case <-InterruptNotice:
@@ -108,20 +113,19 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 		default:
 		}
 
-		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 		err := chromedp.Run(ctx,
 			chromedp.Navigate(url),
 			chromedp.Sleep(time.Second*2),
 			chromedp.Text(selector, &res),
 		)
 		if err != nil {
-			log.Printf("[FetchChrome(%p)][%s] Running chrome failure (%s)\n", ctx, url, err)
+			log.Printf("[FetchChrome(%p)][%s] Running chrome failure (%s)\n", ctx, topic_name, err)
 			continue
 		}
 
 		cres, csucc := process_callback(res)
 		if !csucc {
-			log.Printf("[FetchChrome(%p)][%s] Process callback failure (%s)\n", ctx, url, cres)
+			log.Printf("[FetchChrome(%p)][%s] Process callback failure (%s)\n", ctx, topic_name, cres)
 			continue
 		}
 
