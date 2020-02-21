@@ -50,7 +50,8 @@ func FetchHtml(topic_name string, html_path string, f func(*goquery.Document) st
 			log.Printf("[fetchHtml][%s] '%s' → float64 : %s \n", html_path, hres, err)
 			continue
 		}
-		topicValue[topic_name] = newTopicData(fres)
+
+		UpdateTopicValue(&topicDataAdd{topic_name, newTopicData(fres)})
 	}
 }
 
@@ -74,7 +75,7 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 
 		tdata := newTopicData(cres)
 		AddValue(topic_name, tdata)
-		topicValue[topic_name] = tdata
+		UpdateTopicValue(&topicDataAdd{topic_name, tdata})
 	}
 }
 
@@ -126,7 +127,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 
 		tdata := newTopicData(cres)
 		AddValue(topic_name, tdata)
-		topicValue[topic_name] = tdata
+		UpdateTopicValue(&topicDataAdd{topic_name, tdata})
 	}
 }
 
@@ -145,13 +146,16 @@ func FetchFile(topic_name string, file_path string, process_callback func(val st
 			continue
 		}
 
-		topicValue[topic_name] = newTopicData(cres)
-		AddValue(topic_name, topicValue[topic_name])
+		tdata := newTopicData(cres)
+		AddValue(topic_name, tdata)
+		UpdateTopicValue(&topicDataAdd{topic_name, tdata})
 	}
 }
 
 func FetchRandom(topic_name string) {
 	for {
+		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
+
 		val, ok := topicValue[topic_name]
 		var ival float64
 		if ok {
@@ -160,9 +164,9 @@ func FetchRandom(topic_name string) {
 			ival = 0
 		}
 
-		topicValue[topic_name] = newTopicData(ival + rand.Float64()*25 - 10)
-		AddValue(topic_name, topicValue[topic_name])
-		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
+		tdata := newTopicData(ival + rand.Float64()*25 - 10)
+		AddValue(topic_name, tdata)
+		UpdateTopicValue(&topicDataAdd{topic_name, tdata})
 	}
 }
 

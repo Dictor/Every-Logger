@@ -7,14 +7,22 @@ import (
 	"time"
 )
 
+type topicDataAdd struct {
+	Name string
+	Data *topicData
+}
+
 type topicData struct {
 	Time  int
 	Value float64
 }
 
-var topicValue map[string]*topicData
-var clientTopic map[*ws.WebsocketClient]string
-var topicDetail map[string]interface{}
+var (
+	topicValue     map[string]*topicData
+	topicSafeAdder chan *topicDataAdd
+	topicDetail    map[string]interface{}
+	clientTopic    map[*ws.WebsocketClient]string
+)
 
 func InitFetchTopic(root_dir string) {
 	topicValue = make(map[string]*topicData)
@@ -52,6 +60,17 @@ func BindLatestValue() {
 		}
 	}
 	log.Printf("[BindLatestValue] Binding %d topics latest value", cnt)
+}
+
+func TopicSafeAdder() {
+	for {
+		val := <-topicSafeAdder
+		topicValue[val.Name] = val.Data
+	}
+}
+
+func UpdateTopicValue(val *topicDataAdd) {
+	topicSafeAdder <- val
 }
 
 func newTopicData(val float64) *topicData {

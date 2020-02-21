@@ -26,6 +26,7 @@ func main() {
 	// Initiating topic data
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
+	go TopicSafeAdder()
 	InitFetchTopic(justlog.ExePath)
 	BindLatestValue()
 
