@@ -26,7 +26,7 @@ func main() {
 	// Initiating topic data
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
-	InitFetchTopic()
+	InitFetchTopic(justlog.ExePath)
 	BindLatestValue()
 
 	// Initiation echo server

@@ -16,11 +16,12 @@ var topicValue map[string]*topicData
 var clientTopic map[*ws.WebsocketClient]string
 var topicDetail map[string]interface{}
 
-func InitFetchTopic() {
+func InitFetchTopic(root_dir string) {
 	topicValue = make(map[string]*topicData)
 	clientTopic = make(map[*ws.WebsocketClient]string)
 
 	go FetchRandom("test")
+	go FetchFile("test-file", root_dir+"/db/test-file.txt", FetchStringStdCb)
 	go FetchJson("btcusd", "https://api.cryptowat.ch/markets/bitfinex/btcusd/price", func(data map[string]interface{}) (float64, bool) {
 		price, ok := (data["result"].(map[string]interface{}))["price"].(float64)
 		if !ok {
@@ -29,8 +30,8 @@ func InitFetchTopic() {
 			return price, true
 		}
 	})
-	go FetchChrome("co19-cn-cur", "https://ncov.dxy.cn/ncovh5/view/pneumonia", ".count___3GCdh > li:nth-child(1) > strong", FetchChromeStdCb)
-	go FetchChrome("co19-kr-all", "https://coronamap.site/", "div.wa > .content > div", FetchChromeStdCb)
+	go FetchChrome("co19-cn-cur", "https://ncov.dxy.cn/ncovh5/view/pneumonia", ".count___3GCdh > li:nth-child(1) > strong", FetchStringStdCb)
+	go FetchChrome("co19-kr-all", "https://coronamap.site/", "div.wa > .content > div", FetchStringStdCb)
 }
 
 func BindTopicInfo(root_dir string) {
