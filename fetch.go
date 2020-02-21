@@ -7,6 +7,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/chromedp"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
