@@ -63,6 +63,7 @@ func BindLatestValue() {
 }
 
 func TopicSafeAdder() {
+	topicSafeAdder = make(chan *topicDataAdd)
 	for {
 		val := <-topicSafeAdder
 		topicValue[val.Name] = val.Data
