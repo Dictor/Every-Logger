@@ -121,6 +121,26 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 	}
 }
 
+func FetchFile(topic_name string, file_path string, process_callback func(val string) (float64, bool)) {
+	for {
+		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
+		fdata, err := ioutil.ReadFile(file_path)
+		if err != nil {
+			log.Printf("[FetchFile][%s] Read file failure (%s)\n", file_path, err)
+			continue
+		}
+
+		cres, csucc := process_callback(string(fdata))
+		if !csucc {
+			log.Printf("[FetchFile][%s] Process callback failure (%s)\n", file_path, cres)
+			continue
+		}
+
+		topicValue[topic_name] = newTopicData(cres)
+		AddValue(topic_name, topicValue[topic_name])
+	}
+}
+
 func FetchRandom(topic_name string) {
 	for {
 		val, ok := topicValue[topic_name]
