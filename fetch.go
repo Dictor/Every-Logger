@@ -84,10 +84,11 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 		ctx       context.Context
 		close_ctx context.CancelFunc
 	)
-	clean_loop := func() {
+	var clean_loop = func() {
 		if close_ctx != nil {
 			close_ctx()
 			InterruptCounter.Done()
+			log.Printf("[FetchChrome(%p)][%s] Close context complete\n", ctx, url)
 		}
 	}
 	defer clean_loop()
