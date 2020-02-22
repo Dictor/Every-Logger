@@ -27,6 +27,7 @@ func main() {
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
 	go TopicSafeAdder()
+	InitFetchChrome(justlog.ExePath)
 	InitFetchTopic(justlog.ExePath)
 	BindLatestValue()
 

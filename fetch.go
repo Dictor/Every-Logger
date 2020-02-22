@@ -17,8 +17,10 @@ import (
 )
 
 var (
-	InterruptNotice  chan bool      = make(chan bool)
-	InterruptCounter sync.WaitGroup = sync.WaitGroup{}
+	InterruptNotice    chan bool      = make(chan bool)
+	InterruptCounter   sync.WaitGroup = sync.WaitGroup{}
+	FetchChromeTempDir string
+	FetchChromeRootCtx context.Context
 )
 
 func newGoqDoc(html_path string) (*goquery.Document, bool) {
@@ -79,6 +81,17 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 	}
 }
 
+func InitFetchChrome(root_dir string) {
+	FetchChromeTempDir = root_dir + "/chrome_temp"
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.UserDataDir(FetchChromeTempDir),
+	)
+	FetchChromeRootCtx, _ = chromedp.NewExecAllocator(
+		context.Background(),
+		opts...,
+	)
+}
+
 func FetchChrome(topic_name string, url string, selector string, process_callback func(val string) (float64, bool)) {
 	var (
 		res string
@@ -101,7 +114,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 
 		ctx, _ = chromedp.NewContext(
-			context.Background(),
+			FetchChromeRootCtx,
 			chromedp.WithLogf(log.Printf),
 		)
 		InterruptCounter.Add(1)
