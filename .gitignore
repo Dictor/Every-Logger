@@ -16,6 +16,7 @@
 
 log/
 db/
+chrome_temp/
 every-logger
 Every-Logger
 *.json
