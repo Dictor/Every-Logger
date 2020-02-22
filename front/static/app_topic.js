@@ -34,6 +34,7 @@ var View = {
     Tab: null,
     ws: null,
     Init: function(topic) {
+        moment.locale('ko');
         this.Info = new Vue({
             el: "#info",
             data: Model

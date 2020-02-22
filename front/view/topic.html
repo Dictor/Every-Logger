@@ -15,7 +15,10 @@
 					</div>
 					<div class="col-sm-4 flex-align">
 						<p id="info-value" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }">{{ RecievedDate != 0 ? Value.toFixed(2) : "..." }}</p>
-						<p id="info-date" v-show="RecievedDate != 0">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</p>
+						<div>
+							<span class="badge badge-light" v-show="RecievedDate != 0">{{ moment.unix(ValueDate).fromNow() }} 가져옴 </span>
+							<span class="badge badge-light" v-show="RecievedDate != 0">{{ RecievedDateDelta.toFixed(1) }}초 전 수신됨</span>
+						</div>
 						<p id="info-delta" v-bind:class="{ 'color-increase': ValueDelta > 0, 'color-decrease': ValueDelta < 0 }" v-show="isFinite(ValueDelta)">전일대비 {{ ValueDelta > 0 ? "+" : "" }}{{ ValueDelta.toFixed(2) }}%</p>
 					</div>
 				</div>
