@@ -17,10 +17,11 @@ import (
 )
 
 var (
-	InterruptNotice    chan bool      = make(chan bool)
-	InterruptCounter   sync.WaitGroup = sync.WaitGroup{}
-	FetchChromeTempDir string
-	FetchChromeRootCtx context.Context
+	InterruptNotice      chan bool      = make(chan bool)
+	InterruptCounter     sync.WaitGroup = sync.WaitGroup{}
+	FetchChromeTempDir   string
+	FetchChromeRootCtx   context.Context
+	FetchChromeLogEnable bool
 )
 
 func newGoqDoc(html_path string) (*goquery.Document, bool) {
@@ -81,8 +82,9 @@ func FetchJson(topic_name string, html_path string, process_callback func(map[st
 	}
 }
 
-func InitFetchChrome(root_dir string) {
+func InitFetchChrome(root_dir string, log_enable bool) {
 	FetchChromeTempDir = root_dir + "/chrome_temp"
+	FetchChromeLogEnable = log_enable
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.UserDataDir(FetchChromeTempDir),
 	)
@@ -91,6 +93,12 @@ func InitFetchChrome(root_dir string) {
 		opts...,
 	)
 	log.Printf("[InitFetchChrome] Initialized chrome temp directory is : %s\n", FetchChromeTempDir)
+}
+
+func detailChromeLog(format string, v ...interface{}) {
+	if FetchChromeLogEnable {
+		log.Printf(format, v...)
+	}
 }
 
 func FetchChrome(topic_name string, url string, selector string, process_callback func(val string) (float64, bool)) {
@@ -105,7 +113,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 				log.Printf("[FetchChrome(%p)][%s] Context closing failure (%s)\n", ctx, topic_name, err)
 			}
 			InterruptCounter.Done()
-			//log.Printf("[FetchChrome(%p)][%s] Context closed\n", ctx, topic_name)
+			detailChromeLog("[FetchChrome(%p)][%s] Context closed\n", ctx, topic_name)
 		}
 	}
 	defer clean_loop()
@@ -118,8 +126,11 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 			FetchChromeRootCtx,
 			chromedp.WithLogf(log.Printf),
 		)
+		chromedp.ListenBrowser(ctx, func(ev interface{}) {
+			detailChromeLog("[FetchChrome(%p)][%s] Browser event : %+v\n", ctx, topic_name, ev)
+		})
 		InterruptCounter.Add(1)
-		//log.Printf("[FetchChrome(%p)][%s] Context opened\n", ctx, topic_name)
+		detailChromeLog("[FetchChrome(%p)][%s] Context opened\n", ctx, topic_name)
 
 		select {
 		case <-InterruptNotice:
@@ -136,7 +147,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 			log.Printf("[FetchChrome(%p)][%s] Running chrome failure (%s)\n", ctx, topic_name, err)
 			continue
 		}
-
+		detailChromeLog("[FetchChrome(%p)][%s] Fetching raw data = '%s'", ctx, topic_name, res)
 		cres, csucc := process_callback(res)
 		if !csucc {
 			log.Printf("[FetchChrome(%p)][%s] Process callback failure (%s)\n", ctx, topic_name, cres)
@@ -146,6 +157,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 		tdata := newTopicData(cres)
 		AddValue(topic_name, tdata)
 		UpdateTopicValue(&topicDataAdd{topic_name, tdata})
+		detailChromeLog("[FetchChrome(%p)][%s] Fetching complete", ctx, topic_name)
 	}
 }
 

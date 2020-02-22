@@ -23,11 +23,22 @@ func main() {
 	log_path := justlog.MustPath(justlog.SetPath())
 	defer (justlog.MustStream(justlog.SetStream(log_path))).Close()
 
+	// Bind CLI parameters
+	var (
+		faddr string
+		fclog bool
+	)
+	flag.StringVar(&faddr, "addr", ":80", "Server address")
+	flag.IntVar(&sendPeriod, "sp", 2500, "Websocket sending term")
+	flag.IntVar(&dataPeriod, "fp", 10000, "Fetching data term")
+	flag.BoolVar(&fclog, "chrome-log", false, "Enable detail chrome log")
+	flag.Parse()
+
 	// Initiating topic data
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
 	go TopicSafeAdder()
-	InitFetchChrome(justlog.ExePath)
+	InitFetchChrome(justlog.ExePath, fclog)
 	InitFetchTopic(justlog.ExePath)
 	BindLatestValue()
 
@@ -45,17 +56,10 @@ func main() {
 		main_server.DefaultHTTPErrorHandler(err, cxt)
 	}
 
-	// Bind CLI parameters
-	var addr string
-	flag.StringVar(&addr, "addr", ":80", "Server address")
-	flag.IntVar(&sendPeriod, "sp", 2500, "Websocket sending term")
-	flag.IntVar(&dataPeriod, "fp", 10000, "Fetching data term")
-	flag.Parse()
-
 	// Start echo server
 	SetRouting(main_server, wsInit(justlog.ExePath))
 	log.Println("[SERVER START]")
-	log.Fatal("[SERVER TERMINATED] ", main_server.Start(addr))
+	log.Fatal("[SERVER TERMINATED] ", main_server.Start(faddr))
 }
 
 func attachInterruptHandler() {
