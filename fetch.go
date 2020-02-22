@@ -90,6 +90,7 @@ func InitFetchChrome(root_dir string) {
 		context.Background(),
 		opts...,
 	)
+	log.Printf("[InitFetchChrome] Initialized chrome temp directory is : %s\n", FetchChromeTempDir)
 }
 
 func FetchChrome(topic_name string, url string, selector string, process_callback func(val string) (float64, bool)) {
@@ -104,7 +105,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 				log.Printf("[FetchChrome(%p)][%s] Context closing failure (%s)\n", ctx, topic_name, err)
 			}
 			InterruptCounter.Done()
-			log.Printf("[FetchChrome(%p)][%s] Context closed\n", ctx, topic_name)
+			//log.Printf("[FetchChrome(%p)][%s] Context closed\n", ctx, topic_name)
 		}
 	}
 	defer clean_loop()
@@ -118,7 +119,7 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 			chromedp.WithLogf(log.Printf),
 		)
 		InterruptCounter.Add(1)
-		log.Printf("[FetchChrome(%p)][%s] Context opened\n", ctx, topic_name)
+		//log.Printf("[FetchChrome(%p)][%s] Context opened\n", ctx, topic_name)
 
 		select {
 		case <-InterruptNotice:
