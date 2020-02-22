@@ -56,7 +56,7 @@
 					    </tr>
 				  	</thead>
 				  	<tbody>
-				  		<template v-for="item in History[Term].slice().reverse()">
+				  		<template v-for="item in History[Term]">
 				  			<tr>
 				  				<td scope="row">{{ moment(item[0]).format("YY/MM/DD HH:mm:ss") }}</th>	
 				  				<td>{{ item[1] }}</td>
