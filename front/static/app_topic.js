@@ -51,7 +51,7 @@ var View = {
         Model.TopicId = topic;
         this.ws = new WS(this.wsOnOpen, this.wsOnMsg);
         setInterval(function() {
-                Model.ValueDateDelta = View.Datef(Model.ValueDate);
+                Model.ValueDateDelta = View.Datef(Model.ValueDate * 1000);
                 Model.RecievedDateDelta = View.Datef(Model.RecievedDate);
         }, 100);
     },
@@ -65,7 +65,7 @@ var View = {
     Datef: function(timestamp) {
          let diff_sec = (Date.now() - timestamp) / 1000;
          if (diff_sec < 60) {
-             return diff_sec.toFixed(1);
+             return diff_sec.toFixed(1) +"초 전";
          } else {
              return moment.unix(timestamp).fromNow();
          }
@@ -76,7 +76,7 @@ var View = {
             Model.History["1d"] = await API.GetValueHistory(Model.TopicId, "1d");
             let m = Model.History[Model.Term];
             View.DrawChart(m);
-            Model.ValueLastTerm = Number(Model.History["1d"][Model.History["1d"].length - 2][1]);
+            Model.ValueLastTerm = Number(Model.History["1d"][1][1]);
         },
     wsOnMsg: function (evt) {
             var pstr = evt.data.split(",");
