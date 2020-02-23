@@ -52,7 +52,7 @@ var View = {
         this.ws = new WS(this.wsOnOpen, this.wsOnMsg);
         setInterval(function() {
                 Model.ValueDateDelta = View.Datef(Model.ValueDate);
-                Model.RecievedDateDelta = View.Datef(Model.RecievedDate);
+                Model.RecievedDateDelta = View.Datef(Model.RecievedDate / 1000);
         }, 100);
     },
     ChangeTerm: async function(term) {
@@ -63,7 +63,7 @@ var View = {
         this.DrawChart(Model.History[term]);
     },
     Datef: function(timestamp) {
-         let diff_sec = (Date.now() - timestamp) / 1000;
+         let diff_sec = (Date.now() - timestamp * 1000) / 1000;
          if (diff_sec < 60) {
              return diff_sec.toFixed(1) +"초 전";
          } else {
