@@ -4,6 +4,7 @@ import (
 	//"github.com/PuerkitoBio/goquery"
 	ws "github.com/dictor/wswrapper"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -39,7 +40,10 @@ func InitFetchTopic(root_dir string) {
 		}
 	})
 	go FetchChrome("co19-cn-cur", "https://ncov.dxy.cn/ncovh5/view/pneumonia", ".count___3GCdh > li:nth-child(1) > strong", FetchStringStdCb)
-	go FetchChrome("co19-kr-all", "https://coronamap.site/", "div.wa > .content > div", FetchStringStdCb)
+	//go FetchChrome("co19-kr-all", "https://coronamap.site/", "div.wa > .content > div", FetchStringStdCb)
+	go FetchChrome("co19-kr-all", "http://ncov.mohw.go.kr/index_main.jsp", "div.co_cur >ul > li:first-child > a", func(v string) (float64, bool) {
+		return FetchStringStdCb(strings.Replace(v, " 명", "", -1))
+	})
 }
 
 func BindTopicInfo(root_dir string) {
