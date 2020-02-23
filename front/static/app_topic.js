@@ -6,9 +6,10 @@ var Model = {
     Value: 0.0,
     ValueLastTerm: 0.0,
     ValueDate: 0,
+    ValueDateDelta: 0.0,
     ValueDelta: 0.0,
     
-    RecievedDateDelta: 0.0,
+    RecievedDateDelta: "",
     RecievedDate: 0,
     
     Term: ((this.Term = (new URL(window.location)).searchParams.get('term')) ? this.Term : "10m"),
@@ -50,7 +51,8 @@ var View = {
         Model.TopicId = topic;
         this.ws = new WS(this.wsOnOpen, this.wsOnMsg);
         setInterval(function() {
-                Model.RecievedDateDelta = (Date.now() - Model.RecievedDate) / 1000;
+                Model.ValueDateDelta = View.Datef(Model.ValueDate);
+                Model.RecievedDateDelta = View.Datef(Model.RecievedDate);
         }, 100);
     },
     ChangeTerm: async function(term) {
@@ -59,6 +61,14 @@ var View = {
             Model.History[term]  = await API.GetValueHistory(Model.TopicId, term);
         }
         this.DrawChart(Model.History[term]);
+    },
+    Datef: function(timestamp) {
+         let diff_sec = (Date.now() - timestamp) / 1000;
+         if (diff_sec < 60) {
+             return diff_sec.toFixed(1);
+         } else {
+             return moment.unix(timestamp).fromNow();
+         }
     },
     wsOnOpen: async function(evt) {
             View.ws.Send("TOPIC," + Model.TopicId);
