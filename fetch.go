@@ -138,9 +138,10 @@ func FetchChrome(topic_name string, url string, selector string, process_callbac
 		default:
 		}
 
+		detailChromeLog("[FetchChrome(%p)][%s] Fetching start\n", ctx, topic_name)
 		err := chromedp.Run(ctx,
 			chromedp.Navigate(url),
-			chromedp.Sleep(time.Second*2),
+			chromedp.Sleep(time.Second*1),
 			chromedp.Text(selector, &res),
 		)
 		if err != nil {
