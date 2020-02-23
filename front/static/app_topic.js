@@ -51,7 +51,7 @@ var View = {
         Model.TopicId = topic;
         this.ws = new WS(this.wsOnOpen, this.wsOnMsg);
         setInterval(function() {
-                Model.ValueDateDelta = View.Datef(Model.ValueDate * 1000);
+                Model.ValueDateDelta = View.Datef(Model.ValueDate);
                 Model.RecievedDateDelta = View.Datef(Model.RecievedDate);
         }, 100);
     },
