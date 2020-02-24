@@ -38,8 +38,7 @@ func main() {
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
 	go TopicSafeAdder()
-	InitFetchChrome(justlog.ExePath, fclog)
-	InitFetchTopic(justlog.ExePath)
+	InitFetchTopic(justlog.ExePath, fclog)
 	BindLatestValue()
 
 	// Initiation echo server
