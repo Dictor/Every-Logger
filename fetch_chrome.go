@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/chromedp/chromedp"
+	"github.com/phearme/watchdog-channel"
 	"log"
 	"time"
 )
@@ -49,21 +50,32 @@ func FetchChrome(params []*fetchChromeParam) {
 	var (
 		res string
 		ctx context.Context
+		wd  *watchdog.Watchdog
 	)
 	var clean_loop = func() {
 		if ctx != nil {
 			err := chromedp.Cancel(ctx)
 			if err != nil {
 				log.Printf("[FetchChrome(%p)] Context closing failure (%s)\n", ctx, err)
+			} else {
+				InterruptCounter.Done()
 			}
-			InterruptCounter.Done()
 			detailChromeLog("[FetchChrome(%p)] Context closed\n", ctx)
 		}
 	}
-	defer clean_loop()
+	defer func() {
+		clean_loop()
+		wd.Stop()
+	}()
+
+	wd = startWatchdog(time.Second*60, func() {
+		log.Printf("[FetchChrome(%p)] Watchdog ticked! Force closing context. \n", ctx)
+		clean_loop()
+	})
 
 	for {
 		clean_loop()
+		wd.Reset()
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 
 		ctx, _ = chromedp.NewContext(
@@ -72,7 +84,7 @@ func FetchChrome(params []*fetchChromeParam) {
 		)
 		InterruptCounter.Add(1)
 		chromedp.ListenBrowser(ctx, func(ev interface{}) {
-			//detailChromeLog("[FetchChrome(%p)] Browser event : %+v\n", ctx, ev)
+			detailChromeLog("[FetchChrome(%p)] Browser event : %+v\n", ctx, ev)
 		})
 		detailChromeLog("[FetchChrome(%p)] Context opened\n", ctx)
 		detailChromeLog("[FetchChrome(%p)] Start fetching with %d topics\n", ctx, len(params))
@@ -107,4 +119,17 @@ func FetchChrome(params []*fetchChromeParam) {
 		default:
 		}
 	}
+}
+
+func startWatchdog(interval time.Duration, callback func()) *watchdog.Watchdog {
+	wd := watchdog.NewWatchdog(interval)
+	go func(w *watchdog.Watchdog) {
+		for {
+			select {
+			case <-w.GetKickChannel():
+				callback()
+			}
+		}
+	}(wd)
+	return wd
 }

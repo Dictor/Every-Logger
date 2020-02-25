@@ -12,4 +12,5 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.14
 	github.com/labstack/gommon v0.3.0
+	github.com/phearme/watchdog-channel v0.0.0-20190310110115-d837fb637e89
 )

@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 )
 
 var sendPeriod, dataPeriod int
@@ -70,7 +71,18 @@ func attachInterruptHandler() {
 		close(InterruptNotice)
 		CloseDB()
 		log.Println("[InterruptDetector] Waiting until all fetch routine is closed...")
-		InterruptCounter.Wait()
+
+		c := make(chan struct{})
+		go func() {
+			defer close(c)
+			InterruptCounter.Wait()
+		}()
+		select {
+		case <-c:
+		case <-time.After(30 * time.Second):
+			log.Println("[InterruptDetector] Waiting timeout! Forced finish without gracefully.")
+		}
+
 		log.Println("[InterruptDetector] Closing process is finished! Goodbye!")
 		os.Exit(0)
 	}()
