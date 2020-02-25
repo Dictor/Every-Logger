@@ -24,6 +24,8 @@ github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 h1:tdlZCpZ/P9DhczC
 github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2/go.mod h1:SqUrOPUnsFjfmXRMNPybcSiG0BgUW2AuFH8PAnS2iTw=
 github.com/dictor/justlog v1.1.0 h1:wzZkvyQ5DcsZDD+uB0+z9Aw8GmzH9+kdmQazVO4uJoM=
 github.com/dictor/justlog v1.1.0/go.mod h1:zvJolj3ZtVM7lR7Y0G0IpKtO12lSGztsouoIxlSL7fI=
+github.com/dictor/justlog v1.1.1 h1:6rZvdtABhggLp5cfhNfMDGZXdXDeu2++Q293bM2hqHE=
+github.com/dictor/justlog v1.1.1/go.mod h1:zvJolj3ZtVM7lR7Y0G0IpKtO12lSGztsouoIxlSL7fI=
 github.com/dictor/wswrapper v0.0.0-20200129144518-26f8d6aa2c20 h1:MSgP8H8NCeaBB9lN/hIp/CCJMSvrCtQ7OGwUaCMIuMY=
 github.com/dictor/wswrapper v0.0.0-20200129144518-26f8d6aa2c20/go.mod h1:xC2aDqv0tVLsWFF0HlbZqRVftVUu/r6N8pRlwjCxpd4=
 github.com/dictor/wswrapper v1.0.0 h1:nC+afufS1xpojT6oP5gKqN0PZs5zmNBwiIWfG7gX29w=
