@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	FetchChromeTempDir   string
-	FetchChromeRootCtx   context.Context
-	FetchChromeLogEnable bool
-	FetchChromeTopics    []*fetchChromeParam
+	fetchChromeTempDir   string
+	fetchChromeRootCtx   context.Context
+	fetchChromeLogEnable bool
+	fetchChromeTopics    []*fetchChromeParam = make([]*fetchChromeParam, 0)
 )
 
 type fetchChromeParam struct {
@@ -21,26 +21,26 @@ type fetchChromeParam struct {
 	Callback  FetchStringCallback
 }
 
-func InitFetchChrome(root_dir string, log_enable bool) {
-	FetchChromeTempDir = root_dir + "/chrome_temp"
-	FetchChromeLogEnable = log_enable
+func AddFetchChromeTopic(topic_name string, url string, selector string, callback FetchStringCallback) {
+	fetchChromeTopics = append(fetchChromeTopics, &fetchChromeParam{topic_name, url, selector, callback})
+}
+
+func StartFetchChrome(root_dir string, log_enable bool) {
+	fetchChromeTempDir = root_dir + "/chrome_temp"
+	fetchChromeLogEnable = log_enable
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.UserDataDir(FetchChromeTempDir),
+		chromedp.UserDataDir(fetchChromeTempDir),
 	)
-	FetchChromeRootCtx, _ = chromedp.NewExecAllocator(
+	fetchChromeRootCtx, _ = chromedp.NewExecAllocator(
 		context.Background(),
 		opts...,
 	)
-	FetchChromeTopics = make([]*fetchChromeParam, 0)
-	log.Printf("[InitFetchChrome] Initialized chrome temp directory is : %s\n", FetchChromeTempDir)
-}
-
-func AddFetchChromeTopic(topic_name string, url string, selector string, callback FetchStringCallback) {
-	FetchChromeTopics = append(FetchChromeTopics, &fetchChromeParam{topic_name, url, selector, callback})
+	log.Printf("[InitFetchChrome] Initialized chrome temp directory is : %s\n", fetchChromeTempDir)
+	go FetchChrome(fetchChromeTopics)
 }
 
 func detailChromeLog(format string, v ...interface{}) {
-	if FetchChromeLogEnable {
+	if fetchChromeLogEnable {
 		log.Printf(format, v...)
 	}
 }
@@ -67,7 +67,7 @@ func FetchChrome(params []*fetchChromeParam) {
 		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
 
 		ctx, _ = chromedp.NewContext(
-			FetchChromeRootCtx,
+			fetchChromeRootCtx,
 			chromedp.WithLogf(log.Printf),
 		)
 		InterruptCounter.Add(1)
