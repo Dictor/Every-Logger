@@ -2,17 +2,19 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/chromedp/chromedp"
-	"github.com/phearme/watchdog-channel"
 	"log"
+	"sync/atomic"
 	"time"
 )
 
 var (
-	fetchChromeTempDir   string
-	fetchChromeRootCtx   context.Context
-	fetchChromeLogEnable bool
-	fetchChromeTopics    []*fetchChromeParam = make([]*fetchChromeParam, 0)
+	fetchChromeTempDir                                   string
+	fetchChromeRootCtx                                   context.Context
+	fetchChromeLogEnable                                 bool
+	fetchChromeTopics                                    []*fetchChromeParam = make([]*fetchChromeParam, 0)
+	totalTaskCount, finishedTaskCount, disclaimTaskCount int32
 )
 
 type fetchChromeParam struct {
@@ -20,6 +22,18 @@ type fetchChromeParam struct {
 	Url       string
 	Selector  string
 	Callback  FetchStringCallback
+}
+
+type ChromeTaskResult struct {
+	Success bool
+	Error   error
+	Id      int32
+	Value   *ChromeTaskValue
+}
+
+type ChromeTaskValue struct {
+	TopicValue *topicData
+	TopicName  string
 }
 
 func AddFetchChromeTopic(topic_name string, url string, selector string, callback FetchStringCallback) {
@@ -37,7 +51,7 @@ func StartFetchChrome(root_dir string, log_enable bool) {
 		opts...,
 	)
 	log.Printf("[InitFetchChrome] Initialized chrome temp directory is : %s\n", fetchChromeTempDir)
-	go FetchChrome(fetchChromeTopics)
+	go fetchChrome(fetchChromeTopics)
 }
 
 func detailChromeLog(format string, v ...interface{}) {
@@ -46,90 +60,77 @@ func detailChromeLog(format string, v ...interface{}) {
 	}
 }
 
-func FetchChrome(params []*fetchChromeParam) {
-	var (
-		res string
-		ctx context.Context
-		wd  *watchdog.Watchdog
-	)
-	var clean_loop = func() {
-		if ctx != nil {
-			err := chromedp.Cancel(ctx)
-			if err != nil {
-				log.Printf("[FetchChrome(%p)] Context closing failure (%s)\n", ctx, err)
-			} else {
-				InterruptCounter.Done()
-			}
-			detailChromeLog("[FetchChrome(%p)] Context closed\n", ctx)
-		}
-	}
-	defer func() {
-		clean_loop()
-		wd.Stop()
-	}()
-
-	wd = startWatchdog(time.Second*60, func() {
-		log.Printf("[FetchChrome(%p)] Watchdog ticked! Force closing context. \n", ctx)
-		clean_loop()
-	})
-
+func fetchChrome(params []*fetchChromeParam) {
+	result := make(chan *ChromeTaskResult, 10)
 	for {
-		clean_loop()
-		wd.Reset()
-		time.Sleep(time.Duration(dataPeriod) * time.Millisecond)
-
-		ctx, _ = chromedp.NewContext(
-			fetchChromeRootCtx,
-			chromedp.WithLogf(log.Printf),
-		)
-		InterruptCounter.Add(1)
-		chromedp.ListenBrowser(ctx, func(ev interface{}) {
-			detailChromeLog("[FetchChrome(%p)] Browser event : %+v\n", ctx, ev)
-		})
-		detailChromeLog("[FetchChrome(%p)] Context opened\n", ctx)
-		detailChromeLog("[FetchChrome(%p)] Start fetching with %d topics\n", ctx, len(params))
-
-		for _, param := range params {
-			detailChromeLog("[FetchChrome(%p)][%s] Fetching topic start\n", ctx, param.TopicName)
-			err := chromedp.Run(ctx,
-				chromedp.Navigate(param.Url),
-				chromedp.Text(param.Selector, &res),
-			)
-			if err != nil {
-				log.Printf("[FetchChrome(%p)][%s] Running chrome failure (%s)\n", ctx, param.TopicName, err)
-				continue
-			}
-
-			detailChromeLog("[FetchChrome(%p)][%s] Fetching topic raw data = '%s'", ctx, param.TopicName, res)
-			cres, csucc := param.Callback(res)
-			if !csucc {
-				log.Printf("[FetchChrome(%p)][%s] Process callback failure (%s)\n", ctx, param.TopicName, cres)
-				continue
-			}
-
-			tdata := newTopicData(cres)
-			AddValue(param.TopicName, tdata)
-			UpdateTopicValue(&topicDataAdd{param.TopicName, tdata})
-			detailChromeLog("[FetchChrome(%p)][%s] Fetching topic complete", ctx, param.TopicName)
-		}
-
 		select {
+		case res := <-result:
+			if res.Success {
+				log.Println("s")
+				AddValue(res.Value.TopicName, res.Value.TopicValue)
+				UpdateTopicValue(&topicDataAdd{res.Value.TopicName, res.Value.TopicValue})
+				log.Printf("[FetchChrome] Task(%d) success: %s", res.Id, res.Value.TopicName)
+			} else {
+				log.Printf("[FetchChrome] Task(%d) error: %s", res.Id, res.Error)
+			}
+		case <-time.After(time.Duration(dataPeriod) * time.Millisecond):
+			go startChromeTask(result, params, time.Duration(dataPeriod)*time.Millisecond)
+			t := atomic.LoadInt32(&totalTaskCount)
+			f := atomic.LoadInt32(&finishedTaskCount)
+			d := atomic.LoadInt32(&disclaimTaskCount)
+			log.Printf("[FetchChrome] Task count: (total %d) = (finished %d) + (disclaimed %d) + (running %d)", t, f, d, t-f-d)
 		case <-InterruptNotice:
 			return
-		default:
 		}
 	}
 }
 
-func startWatchdog(interval time.Duration, callback func()) *watchdog.Watchdog {
-	wd := watchdog.NewWatchdog(interval)
-	go func(w *watchdog.Watchdog) {
-		for {
-			select {
-			case <-w.GetKickChannel():
-				callback()
+func startChromeTask(result chan<- *ChromeTaskResult, params []*fetchChromeParam, timeout time.Duration) {
+	cres := make(chan *ChromeTaskResult, 2)
+	cid := atomic.AddInt32(&totalTaskCount, 1)
+	var close_ctx func()
+
+	go func() {
+		var (
+			pctx context.Context
+			sres string
+		)
+		pctx, close_ctx = context.WithTimeout(fetchChromeRootCtx, timeout)
+		ctx, _ := chromedp.NewContext(pctx, chromedp.WithLogf(log.Printf))
+		for _, param := range params {
+			err := chromedp.Run(ctx,
+				chromedp.Navigate(param.Url),
+				chromedp.Text(param.Selector, &sres, chromedp.AtLeast(0)))
+			time.Sleep(time.Second * 1000)
+			if err != nil {
+				cres <- &ChromeTaskResult{false, err, cid, nil}
+			} else {
+				cbres, cbsucc := param.Callback(sres)
+				if !cbsucc {
+					cres <- &ChromeTaskResult{false, errors.New("Callback function returned error."), cid, nil}
+				} else {
+					cres <- &ChromeTaskResult{true, nil, cid, &ChromeTaskValue{newTopicData(cbres), param.TopicName}}
+				}
 			}
 		}
-	}(wd)
-	return wd
+		chromedp.Cancel(ctx)
+		close(cres)
+	}()
+
+	for {
+		select {
+		case <-time.After(timeout * 2):
+			atomic.AddInt32(&disclaimTaskCount, 1)
+			close_ctx()
+			result <- &ChromeTaskResult{false, errors.New("Task timeout! Disclaim current task routine."), cid, nil}
+			return
+		case res, open := <-cres:
+			if open {
+				result <- res
+			} else {
+				atomic.AddInt32(&finishedTaskCount, 1)
+				return
+			}
+		}
+	}
 }

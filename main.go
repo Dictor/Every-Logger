@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -38,7 +39,6 @@ func main() {
 	// Initiating topic data
 	BindTopicInfo(justlog.ExePath)
 	OpenDB(justlog.ExePath)
-	go TopicSafeAdder()
 	InitFetchTopic(justlog.ExePath, fclog)
 	BindLatestValue()
 
@@ -68,21 +68,30 @@ func attachInterruptHandler() {
 	go func() {
 		<-c
 		log.Println("[InterruptDetector] Terminal interrupt detected!")
-		close(InterruptNotice)
 		CloseDB()
+		close(InterruptNotice)
 		log.Println("[InterruptDetector] Waiting until all fetch routine is closed...")
 
 		c := make(chan struct{})
 		go func() {
 			defer close(c)
-			InterruptCounter.Wait()
+			for {
+				var (
+					t = atomic.LoadInt32(&totalTaskCount)
+					f = atomic.LoadInt32(&finishedTaskCount)
+					d = atomic.LoadInt32(&disclaimTaskCount)
+				)
+				if t == f+d {
+					return
+				}
+				time.Sleep(time.Second)
+			}
 		}()
 		select {
 		case <-c:
 		case <-time.After(30 * time.Second):
 			log.Println("[InterruptDetector] Waiting timeout! Forced finish without gracefully.")
 		}
-
 		log.Println("[InterruptDetector] Closing process is finished! Goodbye!")
 		os.Exit(0)
 	}()

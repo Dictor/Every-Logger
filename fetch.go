@@ -10,13 +10,11 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 )
 
 var (
-	InterruptNotice  chan bool      = make(chan bool)
-	InterruptCounter sync.WaitGroup = sync.WaitGroup{}
+	InterruptNotice chan bool = make(chan bool)
 )
 
 type FetchStringCallback func(string) (float64, bool)
