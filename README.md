@@ -17,4 +17,22 @@ Support selecting specific html element with [goquery](https://github.com/Puerki
 - **topic.go** : Topic managing functions and Used topics are defined.
 - **websocket.go** : Thin websocket wrapper of [wswrapper](https://github.com/Dictor/wswrapper).
  
+## Config
+- In _./config.json_
+```json
+{
+    "ws_origin": ["<allowed websocket origins>"]
+}
+```
+- In _./db/topic_detail.json_
 
+Current defined topic.go using below detail config.
+```json
+{
+    "test": {"name": "테스트 데이터", "detail": "랜덤으로 생성되는 테스트용 데이터입니다."},
+    "btcusd": {"name": "비트코인-미국달러", "detail": "1비트코인 당 미국 달러 환율입니다."},
+    "co19-cn-cur": {"name": "코로나19 중국 현재 감염자", "detail": "중국의 현재 감염자 수입니다. (완치 및 사망자 제외)"},
+    "co19-kr-all": {"name": "코로나19 한국 누적 감염자", "detail": "한국의 누적 감염자 수입니다."},
+    "test-file": {"name": "테스트 파일 데이터", "detail": "파일 데이터 가져오기 테스트용 데이터입니다."}
+}
+```
