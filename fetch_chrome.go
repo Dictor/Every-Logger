@@ -66,14 +66,13 @@ func fetchChrome(params []*fetchChromeParam) {
 		select {
 		case res := <-result:
 			if res.Success {
-				log.Println("s")
 				AddValue(res.Value.TopicName, res.Value.TopicValue)
 				UpdateTopicValue(&topicDataAdd{res.Value.TopicName, res.Value.TopicValue})
 				log.Printf("[FetchChrome] Task(%d) success: %s", res.Id, res.Value.TopicName)
 			} else {
 				log.Printf("[FetchChrome] Task(%d) error: %s", res.Id, res.Error)
 			}
-		case <-time.After(time.Duration(dataPeriod) * time.Millisecond):
+		case <-time.After(time.Duration(dataPeriod) * time.Millisecond * 2):
 			go startChromeTask(result, params, time.Duration(dataPeriod)*time.Millisecond)
 			t := atomic.LoadInt32(&totalTaskCount)
 			f := atomic.LoadInt32(&finishedTaskCount)
@@ -101,7 +100,6 @@ func startChromeTask(result chan<- *ChromeTaskResult, params []*fetchChromeParam
 			err := chromedp.Run(ctx,
 				chromedp.Navigate(param.Url),
 				chromedp.Text(param.Selector, &sres, chromedp.AtLeast(0)))
-			time.Sleep(time.Second * 1000)
 			if err != nil {
 				cres <- &ChromeTaskResult{false, err, cid, nil}
 			} else {
