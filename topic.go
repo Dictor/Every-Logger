@@ -25,25 +25,28 @@ var (
 	clientTopic    map[*ws.WebsocketClient]string
 )
 
-func InitFetchTopic(root_dir string) {
+func InitFetchTopic(root_dir string, is_chrome_log bool) {
 	topicValue = make(map[string]*topicData)
 	clientTopic = make(map[*ws.WebsocketClient]string)
-
-	go FetchRandom("test")
-	go FetchFile("test-file", root_dir+"/db/test-file.txt", FetchStringStdCb)
-	go FetchJson("btcusd", "https://api.cryptowat.ch/markets/bitfinex/btcusd/price", func(data map[string]interface{}) (float64, bool) {
-		price, ok := (data["result"].(map[string]interface{}))["price"].(float64)
-		if !ok {
-			return 0.0, false
-		} else {
-			return price, true
-		}
-	})
-	go FetchChrome("co19-cn-cur", "https://ncov.dxy.cn/ncovh5/view/pneumonia", ".count___3GCdh > li:nth-child(1) > strong", FetchStringStdCb)
+	go TopicSafeAdder()
+	/*
+		go FetchRandom("test")
+		go FetchFile("test-file", root_dir+"/db/test-file.txt", FetchStringStdCb)
+		go FetchJson("btcusd", "https://api.cryptowat.ch/markets/bitfinex/btcusd/price", func(data map[string]interface{}) (float64, bool) {
+			price, ok := (data["result"].(map[string]interface{}))["price"].(float64)
+			if !ok {
+				return 0.0, false
+			} else {
+				return price, true
+			}
+		})
+	*/
+	AddFetchChromeTopic("co19-cn-cur", "https://ncov.dxy.cn/ncovh5/view/pneumonia", "div.statistics___3twf0:not(.noCompare___2UJSh) .count___2lQ55 > li:first-child > strong", FetchStringStdCb)
 	//go FetchChrome("co19-kr-all", "https://coronamap.site/", "div.wa > .content > div", FetchStringStdCb)
-	go FetchChrome("co19-kr-all", "http://ncov.mohw.go.kr/index_main.jsp", "div.co_cur >ul > li:first-child > a", func(v string) (float64, bool) {
+	AddFetchChromeTopic("co19-kr-all", "http://ncov.mohw.go.kr/index_main.jsp", "div.co_cur >ul > li:first-child > a", func(v string) (float64, bool) {
 		return FetchStringStdCb(strings.Replace(v, " 명", "", -1))
 	})
+	StartFetchChrome(root_dir, is_chrome_log)
 }
 
 func BindTopicInfo(root_dir string) {
@@ -67,10 +70,12 @@ func BindLatestValue() {
 }
 
 func TopicSafeAdder() {
-	topicSafeAdder = make(chan *topicDataAdd)
+	topicSafeAdder = make(chan *topicDataAdd, 10)
 	for {
-		val := <-topicSafeAdder
-		topicValue[val.Name] = val.Data
+		select {
+		case val := <-topicSafeAdder:
+			topicValue[val.Name] = val.Data
+		}
 	}
 }
 
